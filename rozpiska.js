@@ -310,7 +310,7 @@
     return h;
   }
   function songRows(b) {
-    return (b.typ === 'piesnw' ? row('Wprowadza', b, 'kto2') : '') + row('Śpiewa', b, 'kto') +
+    return (b.typ === 'piesnw' ? row('Wprowadza', b, 'kto2') : '') + row('Śpiewa', b, 'kto') + row('Gra', b, 'gra', kantorFirst(people())) +
       '<div class="rzrole"><button class="chip sm' + (b.typ === 'piesnw' ? ' on' : '') + '" data-act="rz-pw" data-a="' + b.id + '" data-b="1">z wstępem</button>' +
       '<button class="chip sm' + (b.typ === 'piesn' ? ' on' : '') + '" data-act="rz-pw" data-a="' + b.id + '" data-b="0">bez wstępu</button></div>';
   }
@@ -339,14 +339,14 @@
       '<button class="btn text" data-act="rz-ek-clr">Wyczyść</button><button class="btn" data-act="rz-ek-ok">Gotowe (' + r.ekipa.length + ')</button>');
     modalState = { kind: 'rzek' };
   }
-  function row(label, b, field) {
-    return '<div class="who"><span class="t">' + label + '</span>' + personSelect(b[field] || '', 'rz-who', b.id + '|' + field, people()) + '</div>';
+  function row(label, b, field, list) {
+    return '<div class="who"><span class="t">' + label + '</span>' + personSelect(b[field] || '', 'rz-who', b.id + '|' + field, list || people()) + '</div>';
   }
 
   function whoText(b) {
     const who = [];
     if (isRead(b)) { if (b.kto2 && !b.bezWstepu) who.push('wprowadza: ' + b.kto2); if (b.kto) who.push((b.typ === 'psalm' && b.rola === 'Śpiewa' ? 'śpiewa: ' : 'czyta: ') + b.kto); }
-    else if (isSong(b)) { if (b.typ === 'piesnw' && b.kto2) who.push('wprowadza: ' + b.kto2); if (b.kto) who.push('śpiewa: ' + b.kto); }
+    else if (isSong(b)) { if (b.typ === 'piesnw' && b.kto2) who.push('wprowadza: ' + b.kto2); if (b.kto) who.push('śpiewa: ' + b.kto); if (b.gra) who.push('gra: ' + b.gra); }
     else if (b.kto && roleOf(b)) who.push(roleOf(b).toLowerCase() + ': ' + b.kto);
     return who;
   }
@@ -858,11 +858,11 @@
     });
     r.dni.forEach(dd => dd.bloki.forEach(x => {
       const w = String(x._who || ''); delete x._who;
-      const re = /(wprowadza|czyta|śpiewa|prowadzi|odpowiada|przygotowuje|didaskal|kto):\s*/gi; let m, last = null;
+      const re = /(wprowadza|czyta|śpiewa|gra|prowadzi|odpowiada|przygotowuje|didaskal|kto):\s*/gi; let m, last = null;
       const parts = []; while ((m = re.exec(w))) { if (last) parts.push([last[1], w.slice(last.end, m.index).trim()]); last = { 1: m[1].toLowerCase(), end: re.lastIndex }; }
       if (last) parts.push([last[1], w.slice(last.end).trim()]);
       parts.forEach(([lab, who]) => {
-        const f = isSong(x) || isRead(x) ? (lab === 'wprowadza' ? 'kto2' : 'kto') : 'kto';
+        const f = lab === 'gra' ? 'gra' : isSong(x) || isRead(x) ? (lab === 'wprowadza' ? 'kto2' : 'kto') : 'kto';
         x[f] = who; if (!isRead(x) && !isSong(x) && lab !== (KTO[x.typ] || '').toLowerCase()) x.rola = lab.charAt(0).toUpperCase() + lab.slice(1);
         if (isSong(x) && lab === 'wprowadza') x.typ = 'piesnw';
         if (who && r.ekipa.indexOf(who) < 0) r.ekipa.push(who);

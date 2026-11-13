@@ -398,7 +398,7 @@ body.dark #subnav { background: #241a15; }
 body.dark #subnav button b { color: #F6DE8A; }
 .littabs { display: flex; gap: 6px; margin: 0 0 12px; background: var(--chip-off, #efe6d2); border-radius: 14px; padding: 4px; }
 .littabs button { flex: 1; border: 0; background: none; padding: 9px 4px; border-radius: 11px; font-weight: 600; color: var(--sepia); font-size: 14px; }
-.littabs button.on { background: var(--card, #fff); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.littabs button.on { background: var(--paper); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
 body.dark .littabs button.on { background: #3a2a20; color: #F6DE8A; }
 .etap { margin: -6px 0 10px; font-size: 14px; }
 .rzlist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
@@ -669,6 +669,8 @@ nav .dx { display: none; }
   html.desk .dcols { column-count: 2; column-gap: 18px; }
   html.desk .dcols > * { break-inside: avoid; display: inline-block; width: 100%; box-sizing: border-box; }
   html.desk .dcols > .card { margin-top: 0; }
+  html.desk .dcols2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start; }
+  html.desk .dcols2 > div > .card:first-child { margin-top: 0; }
 }
 
 /* Liturgia pokutna w rozpisce – fiolet */
@@ -782,3 +784,53 @@ html.web input, html.web select, html.web textarea { font-size: max(16px, 1em); 
 .mainbtn.on{background:#B8860B;border-color:#F3D27A}.mainbtn.on svg{fill:#FFF3C4;stroke:#FFF3C4}
 .mainbtn.hidden{display:none}
 .mainbtn:not(.hidden) + .syncdot{margin-left:0}
+
+/* Biblia (skrutacja) */
+html.desk .bibtop { position: sticky; top: 0; z-index: 3; }
+.bibsel { justify-content: center; font-size: 16px; }
+.bibpath { margin-top: 8px; line-height: 2; font-size: 14px; }
+.bibtext h2 { font-size: 17px; }
+.bper { margin: 16px 0 6px; color: var(--accent, #8a5a00); font-size: 15px; }
+.bv { padding: 6px 4px; border-radius: 8px; line-height: 1.55; font-size: 17px; }
+.bv > sup { color: #c0392b; font-weight: 700; font-size: 11px; }
+.bv.hl { background: rgba(255, 196, 0, .22); }
+.brefs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.bref { border: 1px solid var(--line); background: transparent; color: #2e7d32; border-radius: 12px; padding: 1px 8px; font-size: 12.5px; cursor: pointer; }
+.bref:active { background: rgba(46, 125, 50, .12); }
+.bnbtn { display: flex; gap: 6px; margin-top: 4px; }
+.bnote { margin: 6px 0 2px; padding: 8px 10px; border-left: 3px solid #b8860b; background: rgba(184, 134, 11, .08); font-size: 14px; line-height: 1.45; border-radius: 0 8px 8px 0; }
+.bnote.k { border-left-color: #5b7fa6; background: rgba(91, 127, 166, .08); }
+.bibch .chip { min-width: 42px; justify-content: center; }
+body.dark .bref { color: #81c784; }
+mark { background: rgba(255, 196, 0, .45); color: inherit; border-radius: 3px; }
+
+/* Biblia: margines, zaznaczanie, drzewo, cytat dnia */
+.bibtext.marg .bv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 34%); gap: 12px; }
+.bibtext.marg .bside { border-left: 1px solid var(--line); padding-left: 8px; font-size: 12.5px; }
+.bibtext.marg .bside .brefs { margin-top: 2px; }
+.bibtext.marg .bside .bref { font-size: 11.5px; padding: 0 6px; }
+@media (max-width: 600px) { .bibtext.marg .bv { grid-template-columns: minmax(0, 1fr) minmax(0, 38%); gap: 8px; } .bv { font-size: 16px; } }
+.bmn { margin-top: 4px; color: var(--sepia); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; border-left: 2px solid #b8860b; padding-left: 6px; }
+.bmn.open { display: block; -webkit-line-clamp: unset; }
+.bvt { cursor: text; }
+.bv.sel { outline: 2px solid rgba(46, 125, 50, .55); background: rgba(46, 125, 50, .07); }
+.bin { color: #2e7d32; font-size: 13px; }
+.ktip { position: relative; display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: #5b7fa6; border-radius: 9px; padding: 0 6px; cursor: help; vertical-align: 2px; }
+.ktip .kpop { display: none; position: absolute; z-index: 20; left: 0; top: 120%; width: min(440px, 78vw); max-height: 50vh; overflow: auto; font-weight: 400; font-size: 13.5px; line-height: 1.45; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-left: 3px solid #5b7fa6; border-radius: 8px; padding: 8px 10px; box-shadow: 0 6px 22px rgba(0,0,0,.18); }
+@media (hover: hover) { .ktip:hover .kpop { display: block; } }
+.bibbar { position: fixed; left: 12px; right: 12px; bottom: 78px; z-index: 30; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,.2); font-size: 14px; }
+.bibbar.hidden { display: none; }
+html.desk .bibbar { left: 260px; bottom: 18px; }
+.bibskr { margin-top: 8px; }
+.stree { margin-top: 8px; }
+.snode { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; margin-left: calc(var(--d) * 16px); padding: 8px 0 8px 10px; border-left: 2px solid rgba(46, 125, 50, .45); border-bottom: 1px dashed var(--line); }
+.snt { font-style: italic; font-size: 14px; margin-top: 3px; }
+.snr textarea { width: 100%; box-sizing: border-box; min-height: 52px; }
+.snx { align-self: start; }
+@media (max-width: 600px) { .snode { grid-template-columns: minmax(0, 1fr) auto; } .snr { grid-column: 1 / 2; } }
+.qday .qt { font-size: 17px; font-style: italic; line-height: 1.5; }
+.pascha.lent .pz { color: #6B3A8C; }
+.pascha.adw .pz { color: #b8860b; }
+.postan .btn.sm { margin-left: 6px; }
+[data-dlist="start"] .sub { margin: 0 0 8px 34px; }
+.skrmode { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(46, 125, 50, .12); border: 1px solid rgba(46, 125, 50, .45); }

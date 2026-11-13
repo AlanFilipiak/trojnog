@@ -40,14 +40,14 @@
     return b64(await pbkdf(pass, S.konto.salt, 256)) === S.konto.hash;
   }
   let unlocked = false, hiddenAt = 0;
-  function needLock(scope) { return !unlocked && S.konto.hash && (S.konto.lock === 'app' || (scope === 'skr' && S.konto.lock === 'skr')); }
+  function needLock(scope) { return !unlocked && S.konto.hash && (S.konto.lock === 'app' || (scope === 'skr' && S.konto.lock === 'skr') || (scope === 'not' && !!S.konto.lockN)); }
 
   function lockScreen(then, title) {
     const el = document.getElementById('lock');
     el.innerHTML = '<div class="lockbox"><img src="witraz.png" alt="" class="locklogo"><div class="lockt">' + esc(title || 'Trójnóg') + '</div>' +
       '<input type="password" id="lockPass" placeholder="Hasło" autocomplete="current-password">' +
       '<button class="btn full mt" data-act="lock-ok">Odblokuj</button>' +
-      (S.konto.lock === 'skr' ? '<button class="btn text full" data-act="lock-cancel">Anuluj</button>' : '') +
+      (S.konto.lock !== 'app' ? '<button class="btn text full" data-act="lock-cancel">Anuluj</button>' : '') +
       '<a class="link center" data-act="lock-forgot">Nie pamiętam hasła</a><div class="muted center" id="lockMsg"></div></div>';
     el.classList.remove('hidden');
     lockThen = then;
@@ -59,10 +59,10 @@
   // zamknięcie ekranu i powrót po minucie – znowu blokada
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') hiddenAt = Date.now();
-    else if (hiddenAt && Date.now() - hiddenAt > 60000 && S.konto.hash && S.konto.lock !== 'off') {
+    else if (hiddenAt && Date.now() - hiddenAt > 60000 && S.konto.hash && (S.konto.lock !== 'off' || S.konto.lockN)) {
       unlocked = false;
       if (S.konto.lock === 'app') lockScreen(null);
-      else if (UI.view === 'skrutacja') { go('start'); }
+      else if (UI.view === 'skrutacja' || UI.view === 'notatnik') { go('start'); }
     }
   });
 
@@ -199,6 +199,7 @@
       '<button class="btn text" data-act="pw-del">Usuń</button></div>' : '<button class="btn ghost full" data-act="pw-set">Ustaw hasło</button>') +
       '<label class="lbl">Blokada hasłem</label><div class="chips">' + [['off', 'Wyłączona'], ['skr', 'Tylko Skrutacja'], ['app', 'Cała aplikacja']].map(x =>
         '<button class="chip' + (k.lock === x[0] ? ' on' : '') + '" data-act="pw-lock" data-a="' + x[0] + '"' + (!k.hash && x[0] !== 'off' ? ' disabled' : '') + '>' + x[1] + '</button>').join('') + '</div>' +
+      (k.hash && k.lock !== 'app' ? '<div class="chips"><button class="chip' + (k.lockN ? ' on' : '') + '" data-act="pw-lockn">' + (k.lockN ? '✓ ' : '') + 'Blokuj też Notatnik</button></div>' : '') +
       '<div class="sec">Moje konto – te same dane na kilku urządzeniach</div>' +
       '<div class="muted">Hasło konta jest osobne od hasła blokady (może być takie samo, jeśli tak je ustawisz).</div>';
     if (k.on) {
@@ -260,6 +261,7 @@
         if (!(await checkPassword(document.getElementById('pwOld').value))) { toast('Złe hasło.'); return true; }
         S.konto.hash = ''; S.konto.salt = ''; S.konto.lock = 'off'; closeModal(); save(); render(); return true;
       case 'pw-lock': S.konto.lock = v; unlocked = true; save(); render(); return true;
+      case 'pw-lockn': S.konto.lockN = !S.konto.lockN; unlocked = true; save(); render(); return true;
       case 'lock-ok': {
         const ok = await checkPassword(document.getElementById('lockPass').value);
         if (!ok) { const m = document.getElementById('lockMsg'); if (m) m.textContent = 'Złe hasło.'; return true; }
@@ -267,9 +269,11 @@
       }
       case 'lock-cancel': hideLock(); lockThen = null; return true;
       case 'lock-forgot':
-        if (S.konto.lock === 'skr') {
-          confirmBox('Zapomniane hasło', 'Można usunąć hasło tylko razem z zapiskami Skrutacji w tym telefonie. Usunąć?', 'Usuń zapiski i hasło', () => {
-            S.skrutacje = []; S.konto.hash = ''; S.konto.salt = ''; S.konto.lock = 'off'; hideLock(); save(); render();
+        if (S.konto.lock !== 'app') {
+          const co = [S.konto.lock === 'skr' ? 'Skrutacji' : '', S.konto.lockN ? 'Notatnika' : ''].filter(Boolean).join(' i ');
+          confirmBox('Zapomniane hasło', 'Można usunąć hasło tylko razem z zapiskami ' + co + ' w tym telefonie. Usunąć?', 'Usuń zapiski i hasło', () => {
+            if (S.konto.lock === 'skr') S.skrutacje = []; if (S.konto.lockN) S.notatki = [];
+            S.konto.hash = ''; S.konto.salt = ''; S.konto.lock = 'off'; S.konto.lockN = false; hideLock(); save(); render();
           });
         } else {
           const m = document.getElementById('lockMsg');
@@ -318,7 +322,7 @@
     relock: function () { unlocked = false; },
     card: card, onSave: onSave, needLock: needLock, lockScreen: lockScreen, ensure: ensure,
     act: function (a, v, el) {
-      if (['pw-set', 'pw-ok', 'pw-del', 'pw-del-ok', 'pw-lock', 'lock-ok', 'lock-cancel', 'lock-forgot', 'acc-in', 'acc-sync', 'acc-out', 'acc-eye', 'acc-pass', 'acc-pass-ok', 'acc-main', 'acc-nomain', 'acc-devdel', 'acc-devname'].indexOf(a) < 0) return false;
+      if (['pw-set', 'pw-ok', 'pw-del', 'pw-del-ok', 'pw-lock', 'pw-lockn', 'lock-ok', 'lock-cancel', 'lock-forgot', 'acc-in', 'acc-sync', 'acc-out', 'acc-eye', 'acc-pass', 'acc-pass-ok', 'acc-main', 'acc-nomain', 'acc-devdel', 'acc-devname'].indexOf(a) < 0) return false;
       act(a, v, el); return true;
     },
   };
