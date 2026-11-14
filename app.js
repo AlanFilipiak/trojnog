@@ -279,7 +279,7 @@ function replacePerson(old, nw) {
     if (nw) S.kolory[nw] = S.kolory[old];
     delete S.kolory[old];
   }
-  ['maile', 'nieakt', 'ice'].forEach(k => { if (S[k] && S[k][old] !== undefined) { if (nw) S[k][nw] = S[k][old]; delete S[k][old]; } });
+  ['maile', 'nieakt', 'ice', 'urodz', 'zmarli'].forEach(k => { if (S[k] && S[k][old] !== undefined) { if (nw) S[k][nw] = S[k][old]; delete S[k][old]; } });
   const mz = curW() && curW().malz;
   if (mz && mz[old] !== undefined) { const sp = mz[old]; delete mz[old]; if (nw) { mz[nw] = sp; mz[sp] = nw; } else delete mz[sp]; }
 }
@@ -325,7 +325,7 @@ function applyTheme() {
 
 /* ---------- Pismo Święte: skopiuj sygnaturę i otwórz aplikację ---------- */
 const BIBLE_PKGS = ['com.pmp.biblia'];
-function bibleBtn(ref) { if (!/\d/.test(String(ref))) return ''; return '<button class="icon bib" data-act="bible" data-a="' + esc(ref) + '" title="Otwórz w aplikacji Pismo Święte">📖</button>'; }
+function bibleBtn(ref) { if (!/\d/.test(String(ref))) return ''; return '<button class="icon bib" data-act="bible" data-a="' + esc(ref) + '" title="Otwórz w Biblii">📖</button>'; }
 function openBible(ref) {
   const r = String(ref || '').trim();
   if (window.BIB && BIB.has()) { BIB.open(r, null); return; }
@@ -420,7 +420,32 @@ function welcomeDialog(i) {
 }
 
 /* ---------- osoby nieaktywne i krótkie imiona („Kasia Sz.”) ---------- */
-const isAkt = b => !(S.nieakt && S.nieakt[b]);
+/** SMS: zmarli nigdy; „Wszyscy” – uczestniczący i na misji; „Wszyscy+” – także nieuczestniczący. */
+const isDead = b => !!(S.zmarli && S.zmarli[b]);
+const massOK = b => !isDead(b) && !(S.nieakt && S.nieakt[b] && S.nieakt[b] !== 'misja');
+const isAkt = b => !(S.nieakt && S.nieakt[b]) && !(S.zmarli && S.zmarli[b]);
+/** Status osoby: † (data śmierci), „na misji” albo „nie uczestniczy”. */
+const stLbl = b => S.zmarli && S.zmarli[b] ? '† ' + plDate(S.zmarli[b]) : S.nieakt && S.nieakt[b] === 'misja' ? '🌍 na misji' : 'nie uczestniczy';
+/** Urodziny (YYYY-MM-DD albo bez roku: --MM-DD) i rocznice śmierci na dany dzień – do kalendarza. */
+function personalOn(d) {
+  const md = d.slice(5), y = +d.slice(0, 4), out = [];
+  const leap = (md === '02-28' && !(y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0)));
+  const hit = v => v && (v.slice(-5) === md || (leap && v.slice(-5) === '02-29'));
+  Object.keys(S.urodz || {}).forEach(b => { const v = S.urodz[b]; if (hit(v) && !(S.zmarli || {})[b] && S.bracia.indexOf(b) >= 0) { const by = +v.slice(0, 4); out.push({ n: '🎂 Urodziny: ' + b + (by > 1900 ? ' (' + (y - by) + ')' : ''), r: 'B' }); } });
+  Object.keys(S.zmarli || {}).forEach(b => { const v = S.zmarli[b], dy = +v.slice(0, 4); if (hit(v) && y > dy) out.push({ n: '† Rocznica śmierci: ' + b + ' (' + (y - dy) + ')', r: 'D' }); });
+  return out;
+}
+/** Najbliższe urodziny i rocznice (n dni). */
+function upcomingPersonal(n) {
+  const out = [], d0 = new Date(); d0.setHours(0, 0, 0, 0);
+  for (let i = 0; i <= n; i++) { const d = new Date(d0.getTime() + i * 864e5), k = isoD(d); personalOn(k).forEach(x => out.push({ d: k, i: i, n: x.n, r: x.r })); }
+  return out;
+}
+function birthdaysCard(n) {
+  const L = upcomingPersonal(n || 30); if (!L.length) return '';
+  return '<div class="card bday"><h2>Urodziny i rocznice</h2>' + L.map(x => '<div class="row"><span class="grow">' + esc(x.n.replace(/^🎂 Urodziny: /, '🎂 ').replace(/^† Rocznica śmierci: /, '† ')) + (x.r === 'D' ? ' <span class="muted">– rocznica śmierci</span>' : '') + '</span><span class="muted">' +
+    (x.i === 0 ? '<b>dziś</b>' : x.i === 1 ? 'jutro' : plDate(x.d).slice(0, 5) + ' · za ' + x.i + ' dni') + '</span></div>').join('') + '</div>';
+}
 function aktywni() { return S.bracia.filter(isAkt); }
 const DWU = /^(Sz|Cz|Ch|Dz|Dż|Dź|Rz)/i;
 /** „Katarzyna Szymańska” → „Katarzyna Sz.”, „Kasia Chmiel” → „Kasia Ch.”. */
@@ -569,7 +594,7 @@ function render() {
 function go(v) {
   if (v === 'skrutacja' && window.KONTO && KONTO.needLock('skr')) { KONTO.lockScreen(() => go('skrutacja'), 'Skrutacja'); return; }
   if (v === 'notatnik' && window.KONTO && KONTO.needLock('not')) { KONTO.lockScreen(() => go('notatnik'), 'Notatnik'); return; }
-  if (v === 'wydatki' && window.KASA && !KASA.any()) v = 'start';
+  if (v === 'wydatki' && ((window.KASA && !KASA.any()) || isPriestMe())) v = 'start';
   if (v !== UI.view && !UI.goBack) {   // historia przejść – „wstecz” wraca tam, skąd przyszedłeś
     UI.hist = (UI.hist || []).filter(x => x !== v); if (UI.view) UI.hist.push(UI.view);
     if (v === 'start') UI.hist = []; if (UI.hist.length > 30) UI.hist.shift();
@@ -642,6 +667,11 @@ function applySeason() {
 
 /* ===== CO NOWEGO (tylko większe zmiany) ===== */
 const CHANGES = [
+  ['14.5', ['Kapłani: osobna sekcja we Wspólnocie z telefonem (✆ / ✉), kapłan może być przy kilku wspólnotach albo gościnnie (np. Pascha)', 'Kapłan jako użytkownik („Kim jesteś”) nie widzi listy wspólnoty ani Kasetki', 'Kapłani do wyboru przy blokach rozpisek']],
+  ['14.4', ['Ekipa dużego tematu: od początku przygotowania do konwiwencji jej bracia są w grupach wyszarzeni (📜) i nie dochodzą do obecnych przy zaznaczaniu całej grupy; plakietka „duży temat” na liście']],
+  ['14.3', ['Wspólnota: na dole „† Odeszli do Pana” – zmarli przechodzą tam z listy', 'SMS: „Wszyscy” – uczestniczący i na misji; „Wszyscy+” – także nieuczestniczący; zmarli nigdy (wiadomość, plan z kalendarza, harmonogramy)', 'Lista: osoby nieuczestniczące na końcu, pod zwijaną belką']],
+  ['14.2', ['Status osoby: „nie uczestniczy obecnie” (zamiast „zawieszony”) i „na misji”', '† Data śmierci – osoba zostaje na liście z krzyżykiem, rocznica śmierci w kalendarzu', 'Urodziny w oknie osoby – w kalendarzu, na Starcie („Urodziny i rocznice”, 14 dni) i we Wspólnocie (30 dni)']],
+  ['14.1', ['Osoba: status „🌍 na misji” (obok nieaktywnego) – w oknie osoby pole Status', '📖 przy czytaniach (Liturgia Słowa, rozpiski, duże tematy) otwiera fragment w Twojej wczytanej Biblii; gdy sygnatura nieznana – szuka w Biblii']],
   ['14.0', ['Przycisk ◀ w nagłówku i „wstecz” wracają tam, skąd przyszedłeś (a nie zawsze na Start)', 'Ustawienia → „📄 Wygeneruj raport (PDF)”: do wyboru lista wspólnoty, najbliższe wydarzenia (zakres), harmonogram Liturgii Słowa i Eucharystii, tematy nieprzerobione / przerobione, statystyki – w kolorach aplikacji']],
   ['13.9', ['Duże tematy – Historia zbawienia (Przygotowania): 17 etapów, miesiąc = temat, daty 4 wieczorów i konwiwencji, start przygotowania 2 miesiące wcześniej', 'Losowanie ekip (małżeństwa odpowiedzialnymi) i tematów; ekipy ręcznie', 'Przy temacie: prezentacja (czytania, wprowadzenia, pieśni), katecheza w częściach, kwestionariusz z pytaniami i losowaniem grup domowych, konwiwencja; SMS do ekipy i do grup domowych, rozpiska do druku', 'Hasła Liturgii Słowa do rozpoczęcia tematów i materiały']],
   ['13.8', ['Kafelek „Harmonogramy” na Starcie i w Przygotowaniach (obok Paschy, Konwiwencji…)']],
@@ -892,7 +922,7 @@ function linksDialog() {
 }
 /** Kafelki w kolejności ustawionej przez użytkownika (nowe dopisują się na końcu). */
 function tilesOrdered() {
-  const okT = t => t[0] !== 'wydatki' || (window.KASA ? KASA.any() : !!S.kasaOk);   // przed wczytaniem kasa.js – ostatnio zapamiętane uprawnienie
+  const okT = t => t[0] !== 'wydatki' || (!isPriestMe() && (window.KASA ? KASA.any() : !!S.kasaOk));   // przed wczytaniem kasa.js – ostatnio zapamiętane uprawnienie
   const ord = (S.tileOrder || []).filter(id => TILES.some(t => t[0] === id));
   const nowe = TILES.filter(t => ord.indexOf(t[0]) < 0), first = nowe.filter(t => t[0] === 'przyg' || t[0] === 'moje');
   return first.concat(ord.map(id => TILES.find(t => t[0] === id))).concat(nowe.filter(t => first.indexOf(t) < 0)).filter(okT);
@@ -1001,7 +1031,8 @@ function viewStart() {
   if (!S.owner) {
     return '<div class="hello">' + (isOktawa() ? 'Chrystus zmartwychwstał!' : 'Pokój Tobie!') + '</div>' +
       '<div class="card"><h2>Kim jesteś?</h2><div class="muted">Wybierz siebie z listy wspólnoty albo wpisz imię. Twoje czytania i funkcje będą wyróżnione.</div>' +
-      '<div class="chips mt">' + S.bracia.map(b => '<button class="chip" data-act="set-owner" data-a="' + esc(b) + '">' + esc(b) + '</button>').join('') + '</div>' +
+      '<div class="chips mt">' + S.bracia.map(b => '<button class="chip" data-act="set-owner" data-a="' + esc(b) + '">' + esc(b) + '</button>').join('') +
+      kapl().map(k => '<button class="chip" data-act="set-owner" data-a="' + esc(k.n) + '">✝ ' + esc(k.n) + '</button>').join('') + '</div>' +
       '<div class="row mt"><input type="text" id="ownerNew" placeholder="Moje imię" class="grow"><button class="btn" data-act="owner-add">OK</button></div></div>';
   }
   const e = S.eucharystia;
@@ -1017,7 +1048,7 @@ function viewStart() {
     post: lentCard, adw: adventCard,
     pok: () => window.POK ? POK.card() : '',
     cytat: () => window.BIB ? BIB.quoteCard() : '',
-    postan: postanCard,
+    postan: postanCard, urodz: () => birthdaysCard(14),
     now: () => {
       const last = S.history.find(x => x.tryb !== 'Eucharystia');
       if (!(S.haslo || e.data || last)) return '';
@@ -1044,6 +1075,32 @@ function harmHintHtml(typ, d) {
   return x ? '<div class="muted mt" data-act="harm-open" data-a="' + x.id + '">📅 Wg harmonogramu ' + plDate(x.d) + ' przygotowuje: <b>' + esc(x.name) + '</b> ›</div>' : '';
 }
 
+
+
+/* ===== KAPŁANI – osobna lista (kilka wspólnot naraz, gościnnie), bez uprawnień odpowiedzialnych ===== */
+function kapl() { return S.kaplani = S.kaplani || []; }
+const isPriestMe = () => !!S.owner && kapl().some(k => k.n === S.owner);
+/** Kapłani tej wspólnoty + goście. */
+function kaplHere() { return kapl().filter(k => (k.wsp || []).indexOf(S.wspAktywna) >= 0 || k.gosc); }
+function kaplCard() {
+  const L = kaplHere(), wn = id => (S.wspolnoty.find(w => w.id === id) || {}).nazwa || '';
+  return '<div class="card kapl"><h2>✝ Kapłani</h2>' + (L.length ? L.map(k => {
+    const tel = (k.tel || '').replace(/\s/g, '');
+    return '<div class="person-row"><div class="grow" data-act="kapl-edit" data-a="' + k.id + '"><div class="pn">' + esc(k.n) + (k.gosc ? ' <span class="tag mis">gościnnie' + (k.gosc !== true && k.gosc !== '1' ? ': ' + esc(k.gosc) : '') + '</span>' : '') + '</div>' +
+      '<div class="muted">' + (k.tel ? esc(k.tel) : 'brak numeru') + ((k.wsp || []).length ? ' · ' + (k.wsp || []).map(wn).filter(Boolean).map(esc).join(', ') : '') + '</div></div>' +
+      '<div class="pacts">' + (tel ? '<button class="icon" data-act="link" data-a="tel:' + esc(tel) + '" title="Zadzwoń">✆</button><button class="icon" data-act="link" data-a="sms:' + esc(tel) + '" title="SMS">✉</button>' : '') + '</div></div>';
+  }).join('') : '<div class="muted">Brak kapłanów przy tej wspólnocie.</div>') +
+    (isPriestMe() ? '' : '<button class="btn ghost full mt" data-act="kapl-edit" data-a="">＋ Dodaj kapłana</button>') + '</div>';
+}
+function kaplDialog(id) {
+  const k = id ? kapl().find(x => x.id === id) : null;
+  const m = modalState && modalState.kind === 'kapl' ? modalState : (modalState = { kind: 'kapl', id: id, wsp: k ? (k.wsp || []).slice() : [S.wspAktywna] });
+  openModal(k ? 'Kapłan' : 'Nowy kapłan', '<label class="lbl">Imię i nazwisko</label><input type="text" id="kpN" value="' + esc(k ? k.n : (m.n || 'ks. ')) + '">' +
+    '<label class="lbl">Telefon</label><input type="tel" id="kpT" value="' + esc(k ? k.tel || '' : m.t || '') + '">' +
+    '<label class="lbl">Wspólnoty</label><div class="chips">' + S.wspolnoty.map(w => '<button class="chip' + (m.wsp.indexOf(w.id) >= 0 ? ' on' : '') + '" data-act="kapl-w" data-a="' + w.id + '">' + esc(w.nazwa) + '</button>').join('') + '</div>' +
+    '<label class="lbl">Gościnnie (np. na Paschę) – opis, puste gdy stały</label><input type="text" id="kpG" placeholder="np. Pascha 2027" value="' + esc(k && k.gosc ? (k.gosc === true ? 'tak' : k.gosc) : m.g || '') + '">',
+    (k ? '<button class="btn text" data-act="kapl-del">Usuń</button>' : '') + '<button class="btn" data-act="kapl-ok">Zapisz</button>');
+}
 
 /* ===== RAPORT (PDF w klimacie aplikacji) ===== */
 const REP_PARTS = [['lista', 'Lista wspólnoty (z numerami)'], ['wyd', 'Najbliższe wydarzenia'], ['harm', 'Harmonogram Liturgii Słowa i Eucharystii'], ['tematy', 'Tematy: nieprzerobione i przerobione'], ['stat', 'Statystyki']];
@@ -1152,7 +1209,7 @@ function smsPlanDialog() {
 /* ===== Strona startowa: bloki (kolejność, widoczność), Adwent, Wielki Post, postanowienie ===== */
 const START_BLOCKS = [['etap', 'Wspólnota i etap'], ['szaty', 'Okres liturgiczny i szaty'], ['pascha', 'Do Paschy'], ['post', 'Wielki Post (dni postu) / do Popielca'],
   ['adw', 'Adwent / do Bożego Narodzenia'], ['pok', 'Od ostatniej liturgii pokutnej'], ['cytat', 'Cytat dnia'], ['postan', 'Moje postanowienie'],
-  ['now', 'Ostatni temat i Eucharystia'], ['tydz', 'Ten tydzień (kalendarz)'], ['tiles', 'Kafelki (ikony)']];
+  ['urodz', 'Urodziny i rocznice (14 dni)'], ['now', 'Ostatni temat i Eucharystia'], ['tydz', 'Ten tydzień (kalendarz)'], ['tiles', 'Kafelki (ikony)']];
 function startOrder() {
   const ids = START_BLOCKS.map(b => b[0]), o = (S.startOrder || []).filter(k => ids.indexOf(k) >= 0);
   ids.forEach((k, i) => { if (o.indexOf(k) < 0) o.splice(Math.min(i, o.length), 0, k); });
@@ -1344,7 +1401,7 @@ function viewCelebracja() {
     const opts = i === 0 ? [] : cats[i - 1];
     h += '<div class="slot"><div class="num">' + READ_LABELS[i] + '</div><div class="body">' +
       '<label class="lbl">' + READ_DESC[i] + (opts.length ? ' · ' + opts.length + ' na liście' : '') + '</label>' +
-      '<div class="inp"><textarea rows="1" data-in="reading" data-a="' + i + '">' + esc(c.readings[i]) + '</textarea>' +
+      '<div class="inp"><textarea rows="1" data-in="reading" data-a="' + i + '">' + esc(c.readings[i]) + '</textarea>' + (c.readings[i] ? bibleBtn(c.readings[i]) : '') +
       (opts.length ? '<button data-act="read-menu" data-a="' + i + '">▾</button>' : '') + '</div></div>' +
       '<div class="pg"><label class="lbl">str.</label><input type="text" inputmode="numeric" data-in="page" data-a="' + i + '" value="' + esc(c.pages[i]) + '"></div></div>';
   }
@@ -1731,6 +1788,7 @@ function mineText(p) {
 /* ===== WSPÓLNOTA ===== */
 
 function viewWspolnota() {
+  if (isPriestMe()) return kaplCard() + '<div class="card"><div class="muted">Lista wspólnoty, grupy i kasetka są dostępne dla odpowiedzialnych.</div></div>';
   const act = S.wspolnoty.find(w => w.id === S.wspAktywna);
   let h = '<div class="card"><h2>Wspólnoty</h2><select data-ch="wsp-sel">' + S.wspolnoty.map(w =>
       '<option value="' + w.id + '"' + (w.id === S.wspAktywna ? ' selected' : '') + '>' + esc(w.nazwa) + (wspShared(w) ? ' ⇅' : '') + '</option>').join('') +
@@ -1767,9 +1825,9 @@ function viewWspolnota() {
     ((S.grupy || []).length ? '<div class="glegend">' + S.grupy.map(g => '<button class="gl' + (UI.gFilter === g.id ? ' on' : '') + '" data-act="gfilter" data-a="' + esc(g.id) + '" style="--gc:' + grpColor(g) + '"><i></i>' + esc(g.nazwa) + ' <b>' + (g.osoby || []).filter(b => S.bracia.indexOf(b) >= 0).length + '</b></button>').join('') +
       '<button class="gl' + (UI.gFilter === 'none' ? ' on' : '') + '" data-act="gfilter" data-a="none"><i style="background:var(--line)"></i>bez grupy</button>' +
       (UI.gFilter ? '<button class="gl clr" data-act="gfilter" data-a="">✕ wszyscy</button>' : '') + '</div>' : '') +
-    '<div class="plist">' + (function () { coupleGroups(); const U = personUnits(), DRAG = '<span class="pdrag" title="Przytrzymaj i przeciągnij"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>';
+    '<div class="plist">' + (function () { coupleGroups(); const U = personUnits().map(u => u.filter(b => !isDead(b))).filter(u => u.length), DRAG = '<span class="pdrag" title="Przytrzymaj i przeciągnij"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>';
       const F = UI.gFilter && (UI.gFilter === 'none' || (S.grupy || []).some(x => x.id === UI.gFilter)) ? UI.gFilter : '';
-      return U.map(u => {
+      const one = u => {
         const g = (S.grupy || []).find(x => u.some(b => (x.osoby || []).indexOf(b) >= 0)), gc = g ? grpColor(g) : '';
         if (F && (F === 'none' ? g : !g || g.id !== F)) return '';
         return '<div class="punit' + (u.length > 1 ? ' couple' : '') + (g ? ' hasg' : '') + '" data-u="' + esc(u[0]) + '"' + (gc ? ' style="--gc:' + gc + '"' : '') + '>' +
@@ -1777,14 +1835,16 @@ function viewWspolnota() {
           const tel = S.telefony[b] || '', ice = (S.ice || {})[b], mail = (S.maile || {})[b];
           return '<div class="person-row fullnames' + (isAkt(b) ? '' : ' inact') + '"><div class="grow" data-act="osoba-edit" data-a="' + esc(b) + '">' +
             '<div class="pn">' + dot(b) + esc(b) + (b === S.owner ? ' <span class="muted">(Ja)</span>' : '') + roleBadges(b, true) + '</div>' +
-            '<div class="pmeta">' + (!isAkt(b) ? '<span class="tag">nieaktywny</span> ' : '') + '<span class="muted">' + (tel || mail ? esc([tel, mail].filter(Boolean).join(' · ')) : 'brak numeru') + '</span></div></div>' +
+            '<div class="pmeta">' + (window.HZ && HZ.busy(b) ? '<span class="tag hz">📜 duży temat: ' + esc(HZ.busy(b)) + '</span> ' : '') + (!isAkt(b) ? '<span class="tag' + ((S.zmarli || {})[b] ? ' dead' : (S.nieakt || {})[b] === 'misja' ? ' mis' : '') + '">' + stLbl(b) + '</span> ' : '') + '<span class="muted">' + (tel || mail ? esc([tel, mail].filter(Boolean).join(' · ')) : 'brak numeru') + '</span></div></div>' +
             '<div class="pacts">' + (tel ? '<button class="icon" data-act="call" data-a="' + esc(b) + '" title="Zadzwoń">✆</button>' +
               '<button class="icon" data-act="sms" data-a="' + esc(b) + '" title="SMS">✉</button>' +
               '<button class="icon wa" data-act="wa" data-a="' + esc(b) + '" title="WhatsApp">W</button>' : '') +
             (mail ? '<button class="icon" data-act="link" data-a="mailto:' + esc(mail) + '" title="E-mail">@</button>' : '') +
             (ice && ice.tel ? '<button class="icon ice" data-act="link" data-a="tel:' + esc(ice.tel.replace(/\s/g, '')) + '" title="Kontakt w nagłej sytuacji: ' + esc(ice.n || '') + '">SOS</button>' : '') + '</div></div>';
         }).join('') + '</div>' + (F ? '' : DRAG) + '</div>';
-      }).join(''); })() + '</div>' +
+      };
+      const off = u => u.every(b => !massOK(b)), A1 = U.filter(u => !off(u)), A2 = U.filter(off), n2 = A2.reduce((n, u) => n + u.length, 0);
+      return A1.map(one).join('') + (A2.length ? '<button class="pinact-bar" data-act="inact-tgl">' + (S.inactOpen ? '▾' : '▸') + ' Nie uczestniczą obecnie (' + n2 + ')</button>' + (S.inactOpen ? A2.map(one).join('') : '') : ''); })() + '</div>' +
     '<div class="muted">⠿ – przytrzymaj i przeciągnij, żeby zmienić kolejność (małżeństwo przesuwa się razem).</div>' +
     '<label class="lbl mt">Nowa osoba</label>' +
     '<input type="text" id="newBrat" placeholder="Imię i nazwisko (w aplikacji: Kasia Sz.)">' +
@@ -1792,7 +1852,11 @@ function viewWspolnota() {
     '<button class="btn full mt" data-act="brat-add">+ Dodaj</button>' +
     '<button class="btn text full mt" data-act="wsp-import">📋 Wklej listę osób z arkusza (imię, telefon, grupa)</button></div>' +
     (window.KAL ? KAL.groupsCard() : '') + communityCard();
-  return h;
+  h += kaplCard();
+  const dead = S.bracia.filter(isDead);
+  if (dead.length) h += '<div class="card dead"><h2>† Odeszli do Pana (' + dead.length + ')</h2>' + dead.map(b => '<div class="person-row" data-act="osoba-edit" data-a="' + esc(b) + '"><div class="grow"><div class="pn">† ' + esc(b) + '</div><div class="muted">' +
+    ((S.urodz || {})[b] && +(S.urodz[b].slice(0, 4)) > 1900 ? plDate(S.urodz[b]) + ' – ' : 'zm. ') + plDate(S.zmarli[b]) + '</div></div></div>').join('') + '<div class="muted mt">Wieczny odpoczynek racz im dać, Panie.</div></div>';
+  return h + birthdaysCard(30);
 }
 
 /* ---------- kilka wspólnot, kolory osób ---------- */
@@ -1956,7 +2020,7 @@ function peopleDocHtml() {
     g.os.forEach(b => {
       n++;
       const ice = (S.ice || {})[b], mail = (S.maile || {})[b], ro = rolesOf(b);
-      rows += '<tr' + (isAkt(b) ? '' : ' class="ina"') + '><td class="n">' + n + '</td><td><b>' + e(b) + '</b>' + (ro.length ? '<div class="d">' + e(ro.join(', ')) + '</div>' : '') + (isAkt(b) ? '' : '<div class="d">nieaktywny</div>') + '</td>' +
+      rows += '<tr' + (isAkt(b) ? '' : ' class="ina"') + '><td class="n">' + n + '</td><td><b>' + e(b) + '</b>' + (ro.length ? '<div class="d">' + e(ro.join(', ')) + '</div>' : '') + (isAkt(b) ? '' : '<div class="d">' + stLbl(b) + '</div>') + '</td>' +
         '<td class="t">' + e(S.telefony[b] || '') + '</td><td>' + (mail ? e(mail) : '') + (ice && ice.tel ? '<div class="d">SOS: ' + e((ice.n ? ice.n + ' ' : '') + ice.tel) + '</div>' : '') + '</td></tr>';
     });
   });
@@ -2064,7 +2128,7 @@ function peopleOf(ws) {
   (ws || []).forEach(id => {
     const w = S.wspolnoty.find(x => x.id === id); if (!w) return;
     const d = wspData(id);
-    d.bracia.forEach(b => { if (!seen[b]) { seen[b] = 1; out.push({ n: b, tel: d.telefony[b] || '', wsp: w.nazwa }); } });
+    d.bracia.forEach(b => { if (!seen[b] && !isDead(b)) { seen[b] = 1; out.push({ n: b, tel: d.telefony[b] || '', wsp: w.nazwa }); } });
   });
   return out;
 }
@@ -2941,7 +3005,7 @@ function openSmsDialog(kind) {
   modalState = { kind: 'sms', what: kind, sel: present.slice(), stage: 'pick', sent: {}, mode: kind === 'eu' ? (EU_ROLES.some(r => S.eucharystia.who[r]) ? 'eu' : 'eu-zap') : kind === 'msg' ? 'msg' : smsDefaultMode() };
   if (kind === 'msg') {
     modalState.ws = S.wspAktywna === 'ALL' ? S.wspolnoty.map(w => w.id) : [S.wspAktywna];
-    modalState.sel = peopleOf(modalState.ws).map(p => p.n);
+    modalState.sel = peopleOf(modalState.ws).map(p => p.n).filter(massOK);
   }
   renderSmsDialog();
 }
@@ -3118,7 +3182,7 @@ function renderSmsDialog() {
       '<button class="btn text" data-act="sms-back">◀ Zmień wybór</button>');
     return;
   }
-  const rows = (msgList || S.bracia.map(b => ({ n: b, tel: S.telefony[b] || '' }))).map(p => {
+  const rows = (msgList || S.bracia.filter(b => !isDead(b)).map(b => ({ n: b, tel: S.telefony[b] || '' }))).map(p => {
     const b = p.n, tel = p.tel;
     return '<label class="row chk"><input type="checkbox" data-ch="sms-sel" data-a="' + esc(b) + '"' + (m.sel.indexOf(b) >= 0 ? ' checked' : '') +
       '><span class="grow">' + dot(b) + esc(b) + (m.what === 'msg' || present.indexOf(b) >= 0 ? '' : ' <span class="muted">(nieobecny)</span>') +
@@ -3129,7 +3193,7 @@ function renderSmsDialog() {
     '<button class="chip' + (m.ws.indexOf(w.id) >= 0 ? ' on' : '') + '" data-act="msg-ws" data-a="' + w.id + '">' + esc(w.nazwa) + '</button>').join('') +
     '<button class="chip' + (m.ws.length === S.wspolnoty.length ? ' on' : '') + '" data-act="msg-ws" data-a="*">Wszystkie</button></div>' : '';
   openModal(title, modeChips + wsChips +
-    '<label class="lbl">Do kogo</label><div class="chips">' + (msgList ? [['wszyscy', 'Wszyscy'], ['nikt', 'Nikt']] : [['obecni', 'Obecni'], ['nieobecni', 'Nieobecni'], ['wszyscy', 'Wszyscy'], ['nikt', 'Nikt']]).map(x =>
+    '<label class="lbl">Do kogo</label><div class="chips">' + (msgList ? [['wszyscy', 'Wszyscy'], ['wszyscy+', 'Wszyscy+'], ['nikt', 'Nikt']] : [['obecni', 'Obecni'], ['nieobecni', 'Nieobecni'], ['wszyscy', 'Wszyscy'], ['wszyscy+', 'Wszyscy+'], ['nikt', 'Nikt']]).map(x =>
       '<button class="chip" data-act="sms-grp" data-a="' + x[0] + '">' + x[1] + '</button>').join('') +
       msgGroups(m).map(g => '<button class="chip' + (g.osoby.indexOf(S.owner) >= 0 ? ' me' : '') + '" data-act="sms-grp" data-a="g:' + esc(g.id) + '">' + (g.osoby.indexOf(S.owner) >= 0 ? '★ Moja grupa: ' : 'Grupa: ') + esc(g.nazwa) + '</button>').join('') + '</div>' +
     '<div class="mt">' + rows + '</div>' +
@@ -3491,7 +3555,7 @@ const PACK = [
 ];
 function packOf(st, sel) {
   const p = { trojnogPack: 1, ver: A && A.version ? A.version() : '', od: st.owner || '', t: Date.now(), parts: {} };
-  if (sel.wsp) p.parts.wsp = { wspolnoty: st.wspolnoty, maile: st.maile || {}, nieakt: st.nieakt || {}, wspolnota: st.wspolnota };
+  if (sel.wsp) p.parts.wsp = { wspolnoty: st.wspolnoty, maile: st.maile || {}, nieakt: st.nieakt || {}, urodz: st.urodz || {}, zmarli: st.zmarli || {}, wspolnota: st.wspolnota };
   if (sel.kal) p.parts.kal = { kal: st.kal || [], grupyRob: st.grupyRob || [] };
   if (sel.rz) p.parts.rz = { rozpiski: st.rozpiski || {} };
   if (sel.hist) p.parts.hist = { history: st.history || [], done: st.done || {} };
@@ -3539,7 +3603,7 @@ function applyPack(p, sel) {
       (w.katechisci || []).forEach(k => { if (!(loc.katechisci = loc.katechisci || []).some(x => x.imie === k.imie)) loc.katechisci.push(k); });
       ['etap', 'region'].forEach(k => { if (!loc[k] && w[k]) loc[k] = w[k]; });
     });
-    S.maile = Object.assign({}, P.wsp.maile || {}, S.maile || {}); S.nieakt = Object.assign({}, P.wsp.nieakt || {}, S.nieakt || {});
+    S.maile = Object.assign({}, P.wsp.maile || {}, S.maile || {}); S.nieakt = Object.assign({}, P.wsp.nieakt || {}, S.nieakt || {}); S.urodz = Object.assign({}, P.wsp.urodz || {}, S.urodz || {}); S.zmarli = Object.assign({}, P.wsp.zmarli || {}, S.zmarli || {});
     if (S.wspolnoty.length && !S.wspolnoty.some(w => w.id === S.wspAktywna)) S.wspAktywna = S.wspolnoty[0].id;
   }
   if (sel.kal && P.kal) {
@@ -3704,17 +3768,17 @@ document.addEventListener('click', ev => {
     case 'eu-full': { const t = euTarget(); if (t) openUrl('https://www.niedziela.pl/liturgia/' + t); return; }
     case 'sms-grp': { grabMsg();
       const m = modalState, present = m.what === 'eu' ? S.eucharystia.obecni : S.obecni;
-      const all = m.what === 'msg' ? peopleOf(m.ws).map(p => p.n) : S.bracia;
+      const all = (m.what === 'msg' ? peopleOf(m.ws).map(p => p.n) : S.bracia).filter(b => !isDead(b)), mass = all.filter(massOK);
       const grp = a.indexOf('g:') === 0 ? msgGroups(m).find(g => g.id === a.slice(2)) : null;
-      m.grpLabel = grp ? 'Grupa: ' + grp.nazwa : ({ obecni: 'Obecni', nieobecni: 'Nieobecni', wszyscy: 'Wszyscy' }[a] || '');
-      m.sel = grp ? all.filter(b => grp.osoby.indexOf(b) >= 0) : a === 'obecni' ? present.slice() : a === 'nieobecni' ? all.filter(b => present.indexOf(b) < 0) : a === 'wszyscy' ? all.slice() : [];
+      m.grpLabel = grp ? 'Grupa: ' + grp.nazwa : ({ obecni: 'Obecni', nieobecni: 'Nieobecni', wszyscy: 'Wszyscy', 'wszyscy+': 'Wszyscy' }[a] || '');
+      m.sel = grp ? mass.filter(b => grp.osoby.indexOf(b) >= 0) : a === 'obecni' ? present.slice() : a === 'nieobecni' ? mass.filter(b => present.indexOf(b) < 0) : a === 'wszyscy' ? mass.slice() : a === 'wszyscy+' ? all.slice() : [];
       renderSmsDialog(); return;
     }
     case 'msg-open': openSmsDialog('msg'); return;
     case 'msg-ws': { grabMsg(); const m = modalState;
       if (a === '*') m.ws = m.ws.length === S.wspolnoty.length ? [] : S.wspolnoty.map(w => w.id);
       else m.ws = m.ws.indexOf(a) >= 0 ? m.ws.filter(x => x !== a) : m.ws.concat([a]);
-      m.sel = peopleOf(m.ws).map(p => p.n); renderSmsDialog(); return; }
+      m.sel = peopleOf(m.ws).map(p => p.n).filter(massOK); renderSmsDialog(); return; }
     case 'sms-send': {
       const m = modalState;
       if (m.what === 'msg') {
@@ -3777,6 +3841,17 @@ document.addEventListener('click', ev => {
     case 'font': S.fontScale = +a; save(true); break;
     case 'tiles-cols': S.tilesMin = a !== '0'; if (S.tilesMin) S.tilesCols = +a; save(true); break;
     case 'nav-back': window.onBack(); return;
+    case 'kapl-edit': if (isPriestMe()) return; modalState = null; kaplDialog(a); return;
+    case 'kapl-w': { const m = modalState; m.n = document.getElementById('kpN').value; m.t = document.getElementById('kpT').value; m.g = document.getElementById('kpG').value;
+      const i = m.wsp.indexOf(a); if (i >= 0) m.wsp.splice(i, 1); else m.wsp.push(a); kaplDialog(m.id); return; }
+    case 'kapl-ok': {
+      const m = modalState, n = document.getElementById('kpN').value.trim(), t = document.getElementById('kpT').value.trim(), g = document.getElementById('kpG').value.trim();
+      if (!n || n === 'ks.') { toast('Wpisz imię i nazwisko.'); return; }
+      let k = m.id && kapl().find(x => x.id === m.id); if (!k) { k = { id: uuid() }; kapl().push(k); }
+      k.n = n; k.tel = t; k.wsp = m.wsp.slice(); k.gosc = g || ''; closeModal(); save(); render(); return;
+    }
+    case 'kapl-del': { const m = modalState; confirmBox('Usunąć kapłana?', '', 'Usuń', () => { S.kaplani = kapl().filter(x => x.id !== m.id); save(); render(); }); return; }
+    case 'inact-tgl': S.inactOpen = !S.inactOpen; save(true); render(); return;
     case 'rep-open': reportDialog(); return;
     case 'rep-dni': S.raport.dni = +a; save(true); reportDialog(); return;
     case 'rep-go': {
@@ -4152,23 +4227,28 @@ document.addEventListener('click', ev => {
         '<label class="lbl">Rola we wspólnocie</label><div class="chips" id="osRole">' + ROLE_LIST.map(r =>
           '<button class="chip' + (rolesOf(a).indexOf(r) >= 0 ? ' on' : '') + '" data-act="os-role" data-a="' + r + '"' + (roleLocked() ? ' disabled' : '') + '>' + r + '</button>').join('') + '</div>' +
           (roleLocked() ? '<div class="muted">Role ustawia odpowiedzialny (lista pobierana z arkusza).</div>' : '') +
-        '<label class="row mt"><input type="checkbox" id="osNieakt"' + (isAkt(a) ? '' : ' checked') + '><span class="grow"><b>Nieaktywny</b><br><span class="muted">Zawieszony – nie ma go wśród obecnych, w losowaniu ani przy rozpiskach. Zostaje na liście.</span></span></label>',
+        '<div class="row"><div class="grow"><label class="lbl">Urodziny</label><input type="date" id="osUr" value="' + esc(((S.urodz || {})[a] || '').replace(/^--/, '2000-')) + '"></div>' +
+        '<div class="grow"><label class="lbl">† Data śmierci</label><input type="date" id="osSm" value="' + esc((S.zmarli || {})[a] || '') + '"></div></div>' +
+        '<label class="lbl">Status</label><select id="osStatus"><option value="">uczestniczy</option><option value="1"' + (S.nieakt && S.nieakt[a] && S.nieakt[a] !== 'misja' ? ' selected' : '') + '>nie uczestniczy obecnie</option><option value="misja"' + (S.nieakt && S.nieakt[a] === 'misja' ? ' selected' : '') + '>🌍 na misji</option></select>' +
+        '<div class="muted">Gdy nie uczestniczy, jest na misji albo odszedł do Pana (†) – nie ma go wśród obecnych, w losowaniu ani przy rozpiskach. Zostaje na liście, a urodziny i rocznica śmierci pokazują się w kalendarzu.</div>',
         '<button class="btn text" data-act="brat-del" data-a="' + esc(a) + '">Usuń</button><button class="btn" data-act="osoba-ok">Zapisz</button>');
       return;
     case 'osoba-ok': {
       const old = modalState.old, v = document.getElementById('osName').value.trim(), t = document.getElementById('osTel').value.trim();
       const roles = roleLocked() ? rolesOf(modalState.old) : Array.from(document.querySelectorAll('#osRole .chip.on')).map(x => x.dataset.a);
       const colEl = document.querySelector('#osCol .chip.on'), col = colEl && colEl.dataset.a !== '' ? +colEl.dataset.a : null;
-      const nieakt = document.getElementById('osNieakt').checked, mail = document.getElementById('osMail').value.trim(), malz = document.getElementById('osMalz').value;
+      const nieakt = document.getElementById('osStatus').value, ur = document.getElementById('osUr').value, sm = document.getElementById('osSm').value, mail = document.getElementById('osMail').value.trim(), malz = document.getElementById('osMalz').value;
       const iceN = document.getElementById('osIceN').value.trim(), iceT = document.getElementById('osIceT').value.trim();
       closeModal();
       if (!v) return;
       if (v !== old && S.bracia.indexOf(v) >= 0) { toast('Taka osoba już jest na liście.'); return; }
       if (v !== old) replacePerson(old, v);
       S.nieakt = S.nieakt || {}; delete S.nieakt[old];
-      if (nieakt) { S.nieakt[v] = true; S.obecni = S.obecni.filter(x => x !== v); if (S.eucharystia) S.eucharystia.obecni = S.eucharystia.obecni.filter(x => x !== v); }
+      if (nieakt) { S.nieakt[v] = nieakt === 'misja' ? 'misja' : true; S.obecni = S.obecni.filter(x => x !== v); if (S.eucharystia) S.eucharystia.obecni = S.eucharystia.obecni.filter(x => x !== v); }
       else delete S.nieakt[v];
       S.maile = S.maile || {}; if (mail) S.maile[v] = mail; else delete S.maile[v];
+      S.urodz = S.urodz || {}; if (ur) S.urodz[v] = ur; else delete S.urodz[v];
+      S.zmarli = S.zmarli || {}; if (sm) { S.zmarli[v] = sm; S.obecni = S.obecni.filter(x => x !== v); } else delete S.zmarli[v];
       S.ice = S.ice || {}; delete S.ice[old]; if (iceT || iceN) S.ice[v] = { n: iceN, tel: iceT };
       setSpouse(v, malz && malz !== v ? malz : '');
       if (malz && malz !== v) {   // wspólna grupa małżeństwa: grupa osoby, której dotyczy okno (albo współmałżonka, gdy ta nie ma)

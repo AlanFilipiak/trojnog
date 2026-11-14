@@ -132,7 +132,7 @@
   const allBlocks = r => [].concat.apply([], r.dni.map(d => d.bloki));
   function findB(r, id) { for (const d of r.dni) { const i = d.bloki.findIndex(b => b.id === id); if (i >= 0) return { d: d, i: i, b: d.bloki[i] }; } return null; }
 
-  function people() { const r = S.rozpiski && S.rozpiski[UI.rz]; return (r && r.ekipa && r.ekipa.length ? r.ekipa : S.obecni.length ? S.obecni : S.bracia).filter(isAkt); }
+  function people() { const r = S.rozpiski && S.rozpiski[UI.rz]; return (r && r.ekipa && r.ekipa.length ? r.ekipa : S.obecni.length ? S.obecni : S.bracia).filter(isAkt).concat(typeof kaplHere === 'function' ? kaplHere().map(k => k.n) : []); }
   const isSong = b => b.typ === 'piesn' || b.typ === 'piesnw';
   /** Kto widzi przygotowania: odpowiedzialni (odp., 2. odp., współodp.) – wszystkie; pozostali – tylko gdy są w ekipie wydarzenia. */
   function resp() { return typeof canSend === 'function' && S.wspolnoty.some(w => canSend(w)); }
@@ -265,7 +265,7 @@
           '<span class="rzdrag" title="Przytrzymaj i przeciągnij" aria-label="Przeciągnij"><svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg></span>' +
           '<span class="rzn">' + (M ? span(tm[i]) : n) + '</span>' +
           '<div class="grow rztit"><input class="rzt" type="text" data-in="rz-f" data-a="' + b.id + '" data-b="tytul" value="' + esc(b.tytul) + '">' +
-          (isRead(b) ? '<div class="rzrefrow"><input class="rzr" type="text" data-in="rz-f" data-a="' + b.id + '" data-b="ref" value="' + esc(b.ref) + '" placeholder="sygnatura, np. Rdz 1, 1-5"><button class="rzrefb" data-act="rz-refpick" data-a="' + b.id + '" title="Wybierz czytanie">▾</button></div>' : '') + '</div>' +
+          (isRead(b) ? '<div class="rzrefrow"><input class="rzr" type="text" data-in="rz-f" data-a="' + b.id + '" data-b="ref" value="' + esc(b.ref) + '" placeholder="sygnatura, np. Rdz 1, 1-5">' + (b.ref && window.bibleBtn ? bibleBtn(b.ref) : '') + '<button class="rzrefb" data-act="rz-refpick" data-a="' + b.id + '" title="Wybierz czytanie">▾</button></div>' : '') + '</div>' +
           (M ? '<div class="rztime">' + tsel + '</div>' : '') +
           '<div class="rzctl"><button class="rzmv rzchg" data-act="rz-chg" data-a="' + b.id + '" aria-label="Zmień rodzaj" title="Zmień rodzaj bloku">⇄</button><button class="rzmv" data-act="rz-up" data-a="' + b.id + '"' + (i ? '' : ' disabled') + ' aria-label="W górę">▲</button>' +
           '<button class="rzmv" data-act="rz-down" data-a="' + b.id + '"' + (i < d.bloki.length - 1 ? '' : ' disabled') + ' aria-label="W dół">▼</button>' +

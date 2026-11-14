@@ -109,7 +109,7 @@
     // 1. prezentacja
     h += '<div class="card"><h2>' + ETAPY[0][1] + ' – ' + dm(D.prez) + '</h2><div class="muted">' + ETAPY[0][2] + '</div>' +
       p.prez.map((r, i) => '<div class="hz-item"><div class="row"><b class="grow">Czytanie ' + (i + 1) + '</b><button class="icon" data-act="hz-del" data-a="prez" data-b="' + i + '">✕</button></div>' +
-        '<input type="text" data-in="hz" data-a="prez|' + i + '|ref" placeholder="Sygnatura, np. Rdz 12,1-9" value="' + esc(r.ref || '') + '">' +
+        '<input type="text" data-in="hz" data-a="prez|' + i + '|ref" placeholder="Sygnatura, np. Rdz 12,1-9" value="' + esc(r.ref || '') + '">' +(r.ref && window.bibleBtn ? bibleBtn(r.ref) : '') +
         '<textarea rows="2" data-in="hz" data-a="prez|' + i + '|wpr" placeholder="Wprowadzenie">' + esc(r.wpr || '') + '</textarea>' +
         '<div class="row"><div class="grow"><label class="lbl">Wprowadza / czyta</label>' + sel(r.kto, 'hz-sel', 'prez|' + i + '|kto') + '</div><div class="grow"><label class="lbl">Pieśń po czytaniu</label><input type="text" data-in="hz" data-a="prez|' + i + '|piesn" value="' + esc(r.piesn || '') + '"></div></div></div>').join('') +
       (p.prez.length < 7 ? '<button class="btn ghost full" data-act="hz-add" data-a="prez">＋ Czytanie</button>' : '') + '</div>';
@@ -240,5 +240,12 @@
     for (let k = 0; k < hz().tematy.length; k++) { const D = dates(k); const x = ETAPY.find(e => D[e[0]] >= td); if (x && status(k) !== 'done') return { k: k, etap: x[1], d: D[x[0]] }; }
     return null;
   }
-  window.HZ = { view: view, viewTemat: viewTemat, act: act, change: change, input: input, next: next };
+  /** Czy osoba jest teraz w ekipie dużego tematu (od startu przygotowania do konwiwencji) – zwraca nazwę tematu. */
+  function busy(b) {
+    if (!S.hz || !S.hz.ekipy) return '';
+    const td = isoD(new Date());
+    const e = S.hz.ekipy.find(x => x.t >= 0 && x.osoby.indexOf(b) >= 0 && !P(x.t).done && td >= dates(x.t).przyg && td <= dates(x.t).konw);
+    return e ? S.hz.tematy[e.t] : '';
+  }
+  window.HZ = { busy: busy, view: view, viewTemat: viewTemat, act: act, change: change, input: input, next: next };
 })();

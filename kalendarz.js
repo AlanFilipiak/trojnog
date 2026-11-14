@@ -52,7 +52,7 @@
     let h = '<div class="card"><h2>Grupy</h2>' +
       (S.grupy.length ? '' : '<div class="muted">Stałe podgrupy zadaniowe na przygotowania (gdy wspólnota jest liczna). Każda osoba należy do jednej grupy.</div>') +
       S.grupy.map(g => '<div class="person-row"><div class="grow"' + (readOnly ? '' : ' data-act="grp-edit" data-a="' + g.id + '"') + '><div class="pn">' + esc(g.nazwa) + ' <span class="muted">(' + g.osoby.length + ')</span></div>' +
-        '<div class="muted">' + (g.osoby.length ? g.osoby.map(b => dot(b) + esc(b)).join(', ') : 'brak osób – dotknij, aby dodać') + '</div></div></div>').join('') +
+        '<div class="muted">' + (g.osoby.length ? g.osoby.map(b => window.HZ && HZ.busy(b) ? '<span class="hzbusy" title="Przygotowuje duży temat: ' + esc(HZ.busy(b)) + '">' + dot(b) + esc(b) + ' 📜</span>' : dot(b) + esc(b)).join(', ') : 'brak osób – dotknij, aby dodać') + '</div></div></div>').join('') +
       (S.grupy.length && free.length ? '<div class="muted mt">Bez grupy: ' + free.map(esc).join(', ') + '</div>' : '') +
       (readOnly ? '' : '<button class="btn ghost full mt" data-act="grp-new">＋ Nowa grupa</button>') + '</div>';
     if (readOnly) return h;
@@ -104,7 +104,7 @@
     if (!gs.length) return '';
     const cur = kind === 'eu' ? S.eucharystia.obecni : S.obecni;
     return '<div class="chips mt"><span class="muted" style="align-self:center">Grupy:</span>' + gs.map(g => {
-      const on = g.osoby.every(b => cur.indexOf(b) >= 0 || S.bracia.indexOf(b) < 0);
+      const on = g.osoby.every(b => cur.indexOf(b) >= 0 || S.bracia.indexOf(b) < 0 || (window.HZ && HZ.busy(b)));
       return '<button class="chip grp' + (on ? ' on' : '') + '" data-act="grp-present" data-a="' + g.id + '" data-b="' + kind + '">' + esc(g.nazwa) + '</button>';
     }).join('') + '</div>';
   }
@@ -170,7 +170,7 @@
     FCACHE[y] = f;
     return f;
   }
-  function feastsOn(isoDate) { return feasts(+isoDate.slice(0, 4))[isoDate] || []; }
+  function feastsOn(isoDate) { return (feasts(+isoDate.slice(0, 4))[isoDate] || []).concat(window.personalOn ? personalOn(isoDate) : []); }
 
   /* ===================== KALENDARZ ===================== */
 
@@ -774,8 +774,8 @@
       case 'grp-present': {
         const g = S.grupy.find(x => x.id === v); if (!g) return true;
         const eu = el.dataset.b === 'eu', cur = new Set(eu ? S.eucharystia.obecni : S.obecni);
-        const allIn = g.osoby.every(b => cur.has(b) || S.bracia.indexOf(b) < 0);
-        g.osoby.forEach(b => { if (allIn) cur.delete(b); else cur.add(b); });
+        const allIn = g.osoby.every(b => cur.has(b) || S.bracia.indexOf(b) < 0 || (window.HZ && HZ.busy(b)));
+        g.osoby.forEach(b => { if (allIn) cur.delete(b); else if (!(window.HZ && HZ.busy(b))) cur.add(b); });
         const list = S.bracia.filter(b => cur.has(b));
         if (eu) S.eucharystia.obecni = list; else S.obecni = list;
         save(); render(); return true;
@@ -972,7 +972,7 @@
   function grabPlan() { const t = document.getElementById('planBody'); if (t && modalState) modalState.body = t.value; }
   function planMsg(m, who) { const h = m.hello === true ? 'imie' : m.hello, nm = h === 'bracia' || !who ? 'bracia' : firstName(who); return (h ? pokoj() + ', ' + nm + '!\n\n' : '') + (m.body !== undefined ? m.body : planText(m)); }
   function planDialog() {
-    if (!modalState || modalState.kind !== 'plan') modalState = { kind: 'plan', range: '14', ws: S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id], feasts: true, stage: 'pick', sent: {}, hello: 'imie', team: false, off: {} };
+    if (!modalState || modalState.kind !== 'plan') modalState = { kind: 'plan', off: Object.fromEntries(peopleOf(S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id]).filter(p => !massOK(p.n)).map(p => [p.n, 1])), range: '14', ws: S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id], feasts: true, stage: 'pick', sent: {}, hello: 'imie', team: false };
     const m = modalState;
     if (m.stage === 'queue') {
       const ppl = planPeople(m.ws).filter(p => !m.off[p.n]);
@@ -1002,7 +1002,7 @@
       '<label class="lbl">Powitanie</label><div class="chips">' + [['imie', 'Pokój, {imię}!'], ['bracia', 'Pokój, bracia!'], ['', 'bez']].map(x =>
         '<button class="chip' + ((m.hello === true ? 'imie' : m.hello || '') === x[0] ? ' on' : '') + '" data-act="plan-hi" data-a="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
       '<label class="lbl">Podgląd</label><div class="msgprev">' + esc(planText(m)) + '</div>' +
-      '<label class="lbl">Do kogo</label><div class="chips"><button class="chip" data-act="plan-all" data-a="1">Wszyscy</button><button class="chip" data-act="plan-all" data-a="0">Nikt</button></div>' +
+      '<label class="lbl">Do kogo</label><div class="chips"><button class="chip" data-act="plan-all" data-a="1">Wszyscy</button><button class="chip" data-act="plan-all" data-a="2">Wszyscy+</button><button class="chip" data-act="plan-all" data-a="0">Nikt</button></div>' +
       planPeople(m.ws).map(p => '<label class="row chk"><input type="checkbox" data-ch="plan-p" data-a="' + esc(p.n) + '"' + (m.off[p.n] ? '' : ' checked') + '><span class="grow">' + dot(p.n) + esc(p.n) +
         (m.ws.length > 1 ? ' <span class="muted">· ' + esc(p.wsp) + '</span>' : '') + '</span><span class="muted">' + (p.tel ? esc(p.tel) : 'brak numeru') + '</span></label>').join(''),
       '<button class="btn" data-act="plan-next"' + (m.ws.length ? '' : ' disabled') + '>Dalej (' + planPeople(m.ws).filter(p => !m.off[p.n]).length + ' os.) ▶</button>');
@@ -1019,7 +1019,7 @@
         delete m.body; planDialog(); return true;
       case 'plan-hi': m.hello = v; planDialog(); return true;
       case 'plan-next': m.stage = 'queue'; planDialog(); return true;
-      case 'plan-all': { m.off = {}; if (v === '0') planPeople(m.ws).forEach(p => { m.off[p.n] = 1; }); const sc = document.querySelector('.sh-b'), y = sc ? sc.scrollTop : 0; planDialog(); const s2 = document.querySelector('.sh-b'); if (s2) s2.scrollTop = y; return true; }
+      case 'plan-all': { m.off = {}; planPeople(m.ws).forEach(p => { if (v === '0' || (v === '1' && !massOK(p.n))) m.off[p.n] = 1; }); const sc = document.querySelector('.sh-b'), y = sc ? sc.scrollTop : 0; planDialog(); const s2 = document.querySelector('.sh-b'); if (s2) s2.scrollTop = y; return true; }
       case 'plan-back': grabPlan(); m.stage = 'pick'; planDialog(); return true;
       case 'plan-auto': { grabPlan(); const ppl = planPeople(m.ws).filter(p => !m.off[p.n]);
         sendAllAuto(ppl.map(p => ({ tel: p.tel, text: planMsg(m, p.n) })), () => { ppl.forEach(p => { if (p.tel) m.sent[p.n] = true; }); if (modalState === m) planDialog(); });
@@ -1268,7 +1268,7 @@
   }
   function smsDialog() {
     const H = hById(UI.harmId); if (!H) return;
-    const m = modalState && modalState.kind === 'hsms' ? modalState : (modalState = { kind: 'hsms', off: {}, all: false, hello: true });
+    const m = modalState && modalState.kind === 'hsms' ? modalState : (modalState = { kind: 'hsms', off: Object.fromEntries(peopleOf([S.wspAktywna]).filter(p => !massOK(p.n)).map(p => [p.n, 1])), all: false, hello: true });
     const ppl = peopleOf([S.wspAktywna]), msg = n => (m.hello ? pokoj() + ', ' + firstName(n) + '!\n\n' : '') + harmText(H, n, m.all);
     m.items = () => ppl.filter(p => !m.off[p.n]).map(p => ({ tel: p.tel, text: msg(p.n) }));
     openModal('Harmonogram – SMS', '<div class="muted">Każdy dostaje terminy swojej grupy.</div>' +

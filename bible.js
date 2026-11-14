@@ -385,7 +385,8 @@
       const x = skrOf(skrId); if (x && x.nodes && x.nodes.length) s.cur = x.nodes[x.nodes.length - 1].id;
     }
     const r = parseRefs(ref, s.b)[0];
-    if (r) { s.path = [refLabel(r)]; return goRef(ref, false); }
+    if (r && goRef(ref, false)) { s.path = [refLabel(r)]; return true; }
+    if (String(ref || '').trim()) { if (UI.view !== 'biblia') go('biblia'); search(String(ref).replace(/[\d,.:;-]+/g, ' ').trim() || ref); return true; }
     go('biblia'); return true;
   }
   function search(q) {
