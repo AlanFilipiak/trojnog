@@ -180,7 +180,10 @@
     ['p-kon', 'Przygotowanie Konwiwencji', '#B7791F', 'p'], ['p-og', 'Przygotowanie ogólne', '#3F7A3A', 'p'],
     ['brak-eu', 'Brak Eucharystii', '#8A8178', 'c'], ['pascha', 'Pascha', '#C9A227', 'c'], ['kpr', 'Konwiwencja początku roku', '#B7791F', 'c'],
     ['gk', 'Głoszenie katechez', '#00796B', 'k'], ['kat', 'Katecheza', '#00897B', 'k'], ['skat', 'Spotkanie z katechistami', '#5D4037', 'k'],
+    ['inne', 'Własne wydarzenie', '#455A64', 'o'],
   ];
+  /** Nazwa wydarzenia – przy „Własnym” wpisany tytuł. */
+  function nm(e) { return e && e.typ === 'inne' && e.tytul ? e.tytul : (TY[e && e.typ] || TY['p-og']).n; }
   const FISH = '<svg class="fish" viewBox="0 0 40 24" aria-hidden="true"><path d="M3 7c5-5 12-5 17 0-5 5-12 5-17 0zM20 7l5-4v8z"/><path d="M15 17c5-5 12-5 17 0-5 5-12 5-17 0zM32 17l5-4v8z"/><circle cx="8" cy="6.3" r=".9" fill="#fff"/><circle cx="20" cy="16.3" r=".9" fill="#fff"/></svg>';
   const RANGE = ['kon', 'p-kon', 'kpr', 'gk'];
   /** Przygotowanie ↔ celebracja: „Przygotowanie Eucharystii” wskazuje, której Eucharystii dotyczy (data, godzina). */
@@ -224,7 +227,7 @@
     }
     return '';
   }
-  const SHORT = { eu: 'Euch', ls: 'LS', lp: 'Pok', kon: 'Konw', 'p-ls': 'P·LS', 'p-eu': 'P·Eu', 'p-lp': 'P·LP', 'p-kon': 'P·K', 'p-og': 'Przyg', 'brak-eu': 'Brak Eu', pascha: 'Pascha', kpr: 'KPR', gk: 'Głosz', kat: 'Kat', skat: 'Kat-ści' };
+  const SHORT = { inne: 'W', eu: 'Euch', ls: 'LS', lp: 'Pok', kon: 'Konw', 'p-ls': 'P·LS', 'p-eu': 'P·Eu', 'p-lp': 'P·LP', 'p-kon': 'P·K', 'p-og': 'Przyg', 'brak-eu': 'Brak Eu', pascha: 'Pascha', kpr: 'KPR', gk: 'Głosz', kat: 'Kat', skat: 'Kat-ści' };
   const TY = {}; TYPES.forEach(t => { TY[t[0]] = { n: t[1], col: t[2], kind: t[3], s: SHORT[t[0]] }; });
   const MONTHS = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
   const DOW = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
@@ -290,7 +293,7 @@
     const t = TY[e.typ] || TY['p-og'];
     const mine = inTeam(e);
     return '<div class="kev' + (mine ? ' mine' : '') + '" data-act="kal-edit" data-a="' + e.id + '" style="border-left-color:' + t.col + '">' +
-      '<div class="row"><b class="grow">' + esc(t.n) + '</b><span class="muted">' + esc(timeText(e)) + '</span></div>' +
+      '<div class="row"><b class="grow">' + esc(nm(e)) + '</b><span class="muted">' + esc(timeText(e)) + '</span></div>' +
       (whereTxt(e) || e.adres ? '<div>📍 ' + esc(whereTxt(e)) + (e.adres ? ' <span class="muted">' + esc(e.adres) + '</span>' : '') + '</div>' : '') +
       (teamText(e) ? '<div>👥 <span class="muted">' + (isPrep(e) ? 'Przygotowują:' : 'Ekipa (przygotowuje):') + '</span> ' + esc(teamText(e)) + (mine ? ' <span class="rb">Ty</span>' : '') + '</div>' : '') +
       (e.agapa ? '<div>' + FISH + ' Agapa' + (e.agapaInfo ? ': ' + esc(e.agapaInfo) : '') + '</div>' : '') +
@@ -337,7 +340,7 @@
         h += '<div class="' + cls + ' multi" data-act="kal-day" data-a="' + k + '" style="' + shadow + '">' +
           '<span class="dn">' + d + '</span><span class="kseg n' + show.length + '">' + show.map((e, i) => {
             const c = (TY[e.typ] || TY['p-og']).col;
-            const TINY = { eu: 'Eu', ls: 'LS', lp: 'LP', kon: 'Kw', 'p-ls': 'P', 'p-eu': 'P', 'p-lp': 'P', 'p-kon': 'P', 'p-og': 'P', 'brak-eu': '–Eu', pascha: '✝', kpr: 'KR', gk: 'GK', kat: 'K', skat: 'KŚ' };
+            const TINY = { inne: 'W', eu: 'Eu', ls: 'LS', lp: 'LP', kon: 'Kw', 'p-ls': 'P', 'p-eu': 'P', 'p-lp': 'P', 'p-kon': 'P', 'p-og': 'P', 'brak-eu': '–Eu', pascha: '✝', kpr: 'KR', gk: 'GK', kat: 'K', skat: 'KŚ' };
             const txt = (i === 3 && more > 0) ? '+' + (more + 1) : show.length === 4 ? (TINY[e.typ] || '•') : (TY[e.typ] || TY['p-og']).s;
             return '<i style="background:' + hexA(c, 0.22) + ';border-color:' + hexA(c, 0.9) + ';color:' + c + '"' + (inTeam(e) ? ' class="me"' : '') + '>' + esc(txt) + '</i>';
           }).join('') + '</span></div>';
@@ -373,7 +376,7 @@
     // najbliższe
     const up = alive().filter(e => visible(e) && (e.dataDo || e.data) >= td).sort((a, b) => (a.data + (a.godz || '')).localeCompare(b.data + (b.godz || ''))).slice(0, 8);
     h += '<div class="card"><h2>Najbliższe</h2>' + (up.length ? up.map(e => '<div class="kup" data-act="kal-goto" data-a="' + e.data + '"><span class="kdate">' +
-      plDate(e.data).slice(0, 5) + '</span><i class="pd" style="background:' + (TY[e.typ] || TY['p-og']).col + '"></i><span class="grow">' + esc((TY[e.typ] || TY['p-og']).n) +
+      plDate(e.data).slice(0, 5) + '</span><i class="pd" style="background:' + (TY[e.typ] || TY['p-og']).col + '"></i><span class="grow">' + esc(nm(e)) +
       (e.godz ? ' · ' + e.godz : '') + (whereTxt(e) ? ' · ' + esc(whereTxt(e)) : '') + '</span>' + (inTeam(e) ? '<span class="rb">Ty</span>' : '') + '</div>').join('')
       : '<div class="muted">Nic nie zaplanowano.</div>') + '</div>';
 
@@ -397,6 +400,7 @@
     if (!document.getElementById('kData')) return e;
     e.data = v('kData') || e.data; e.dataDo = v('kDataDo'); e.godz = v('kGodz'); e.godzDo = v('kGodzDo');
     if (document.getElementById('kCelData')) { const nd = v('kCelData'); if (nd !== e.celData) delete e.celId; e.celData = nd; e.celGodz = v('kCelGodz'); }
+    if (document.getElementById('kTytul')) e.tytul = v('kTytul');
     e.gdzie = v('kGdzie'); e.adres = v('kAdres'); e.uwagi = v('kUwagi'); e.info = v('kInfo'); e.agapaInfo = v('kAgapaInfo');
     e.agapa = document.getElementById('kAgapa').checked; ['pismo', 'wyjazd', 'stroj'].forEach(k => { const x = document.getElementById('k_' + k); if (x) e[k] = x.checked; }); e.wszyscy = false;
     { const mi = document.getElementById('kMiasto'); if (mi) { if ((e.miasto || '') !== mi.value.trim()) { delete e.lat; delete e.lon; } e.miasto = mi.value.trim(); } }
@@ -412,11 +416,12 @@
     const grp = (kind, label) => '<optgroup label="' + label + '">' + TYPES.filter(x => x[3] === kind).map(x =>
       '<option value="' + x[0] + '"' + (e.typ === x[0] ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</optgroup>';
     const kon = RANGE.indexOf(e.typ) >= 0;
-    openModal(m.isNew ? 'Nowe wydarzenie' : t.n,
+    openModal(m.isNew ? 'Nowe wydarzenie' : nm(e),
       '<label class="lbl">Rodzaj wydarzenia</label><button class="typbtn" data-act="kal-typlist"><i class="pd big" style="background:' + t.col + '"></i><span class="grow">' + esc(t.n) + '</span><span class="chev sm' + (UI.typOpen ? ' up' : ' down') + '"></span></button>' +
-      (UI.typOpen ? '<div class="typlist">' + [['c', 'Celebracje'], ['k', 'Katechezy'], ['p', 'Przygotowania']].map(g => '<div class="typsec">' + g[1] + '</div>' +
+      (UI.typOpen ? '<div class="typlist">' + [['c', 'Celebracje'], ['k', 'Katechezy'], ['p', 'Przygotowania'], ['o', 'Inne']].map(g => '<div class="typsec">' + g[1] + '</div>' +
         TYPES.filter(x => x[3] === g[0]).map(x => '<button class="typopt' + (e.typ === x[0] ? ' on' : '') + '" data-act="kal-typset" data-a="' + x[0] + '"><i class="pd" style="background:' + x[2] + '"></i>' +
           x[1] + '</button>').join('')).join('') + '</div>' : '') +
+      (e.typ === 'inne' ? '<label class="lbl">Tytuł</label><input type="text" id="kTytul" value="' + esc(e.tytul || '') + '" placeholder="np. Spotkanie ekipy, Rekolekcje">' : '') +
       '<div class="row"><div class="grow"><label class="lbl">' + (kon ? 'Od' : 'Data') + '</label><input type="date" id="kData" value="' + esc(e.data) + '"></div>' +
       '<div class="grow"><label class="lbl">Godzina</label><input type="time" id="kGodz" value="' + esc(e.godz) + '"></div></div>' +
       (kon ? '<div class="row"><div class="grow"><label class="lbl">Do</label><input type="date" id="kDataDo" value="' + esc(e.dataDo) + '"></div>' +
@@ -436,7 +441,7 @@
       '<label class="lbl">Adres (opcjonalnie)</label><div class="row"><input type="text" id="kAdres" class="grow" value="' + esc(e.adres) + '">' +
       (e.adres ? '<button class="btn ghost" data-act="kal-map">🗺</button>' : '') + '</div>' +
       '<label class="lbl">Przypomnij w wiadomości</label>' + EXTRAS.map(x => '<label class="row"><input type="checkbox" id="k_' + x[0] + '"' + (e[x[0]] ? ' checked' : '') + '><span class="grow">' + x[1] + '</span></label>').join('') +
-      '<label class="lbl">Poza tym (własnymi słowami)</label><textarea id="kInfo" rows="2" placeholder="np. daj znać, jeśli nie masz Biblii Jerozolimskiej">' + esc(e.info) + '</textarea>' +
+      '<label class="lbl">' + (e.typ === 'inne' ? 'Opis' : 'Poza tym (własnymi słowami)') + '</label><textarea id="kInfo" rows="2" placeholder="np. daj znać, jeśli nie masz Biblii Jerozolimskiej">' + esc(e.info) + '</textarea>' +
       '<label class="lbl">Uwagi</label><textarea id="kUwagi" rows="2">' + esc(e.uwagi) + '</textarea>' +
       '<label class="row mt"><input type="checkbox" id="kAgapa"' + (e.agapa ? ' checked' : '') + '><span class="grow">' + FISH + ' Agapa</span></label>' +
       '<input type="text" id="kAgapaInfo" class="mt" value="' + esc(e.agapaInfo) + '" placeholder="Agapa – kto co przynosi (opcjonalnie)">' +
@@ -486,8 +491,8 @@
     alive().forEach(e => {
       const t = TY[e.typ] || TY['p-og'], d = nextOn(e, today); if (!d) return;
       const mine = inTeam(e);
-      if (mine && P.co.prep) out.push({ id: e.id, ev: e.id, d: d, godz: e.godz, title: (isPrep(e) ? 'Przygotowujesz: ' : 'Twoja ekipa: ') + t.n, text: [whereTxt(e), e.adres].filter(Boolean).join(' · ') });
-      else if (!isPrep(e) && P.co.kal) out.push({ id: e.id, ev: e.id, d: d, godz: e.godz, title: t.n, text: [whereTxt(e), e.adres, e.agapa ? 'agapa' : ''].filter(Boolean).join(' · ') });
+      if (mine && P.co.prep) out.push({ id: e.id, ev: e.id, d: d, godz: e.godz, title: (isPrep(e) ? 'Przygotowujesz: ' : 'Twoja ekipa: ') + nm(e), text: [whereTxt(e), e.adres].filter(Boolean).join(' · ') });
+      else if (!isPrep(e) && P.co.kal) out.push({ id: e.id, ev: e.id, d: d, godz: e.godz, title: nm(e), text: [whereTxt(e), e.adres, e.agapa ? 'agapa' : ''].filter(Boolean).join(' · ') });
     });
     const c = S.celebration, myR = [];
     for (let i = 0; i < 5; i++) if (c.who[i] === S.owner) myR.push((i ? 'czytanie ' + i : 'wstęp ogólny') + (i && c.readings[i] ? ' – ' + c.readings[i] : ''));
@@ -605,7 +610,7 @@
         if (e.dataDo) { const u = fromIso(e.dataDo); rrule += ';UNTIL=' + u.getFullYear() + pad(u.getMonth() + 1) + pad(u.getDate()) + 'T235959Z'; }
       }
       const desc = extraLines(e, { team: true }).concat(S.wspolnoty.length > 1 ? [e.wsp === 'all' ? 'Wszystkie wspólnoty' : wspName(e.wsp)] : [], ['— z aplikacji Trójnóg']).join('\n');
-      out.push({ id: e.id, rem: remMinutesFor(e.id), title: '✝ ' + t.n, desc: desc, loc: [e.gdzie, e.miasto, e.adres].filter(Boolean).join(', '), start: start, end: end, allDay: allDay, rrule: rrule });
+      out.push({ id: e.id, rem: remMinutesFor(e.id), title: '✝ ' + nm(e), desc: desc, loc: [e.gdzie, e.miasto, e.adres].filter(Boolean).join(', '), start: start, end: end, allDay: allDay, rrule: rrule });
     });
     return out;
   }
@@ -713,7 +718,7 @@
     function row(d, e, mine, head) {
       const dd = fromIso(d), lbl = d === td ? 'dziś' : d === iso(addDays(new Date(t0.getFullYear(), t0.getMonth(), t0.getDate()), 1)) ? 'jutro' : SH[dd.getDay()] + ' ' + plDate(d).slice(0, 5);
       return '<div class="kup' + (mine ? ' mine' : '') + '" data-act="kal-goto" data-a="' + d + '"><span class="kdate">' + (head ? lbl : '') + '</span><i class="pd" style="background:' + (TY[e.typ] || TY['p-og']).col + '"></i>' +
-        '<span class="grow">' + esc((TY[e.typ] || TY['p-og']).n) + (e.godz ? ' · ' + e.godz : '') + (whereTxt(e) ? ' · ' + esc(whereTxt(e)) : '') + '</span>' + (mine ? '<span class="rb">' + esc(mine) + '</span>' : '') + '</div>';
+        '<span class="grow">' + esc(nm(e)) + (e.godz ? ' · ' + e.godz : '') + (whereTxt(e) ? ' · ' + esc(whereTxt(e)) : '') + '</span>' + (mine ? '<span class="rb">' + esc(mine) + '</span>' : '') + '</div>';
     }
   }
 
@@ -721,6 +726,7 @@
 
   function act(a, v, el) {
     if (a.indexOf('plan-') === 0) return planAct(a, v, el);
+    if (a.indexOf('harm-') === 0) return harmAct(a, v, el);
     const m = modalState;
     switch (a) {
       case 'tgl': el.classList.toggle('on'); return true;
@@ -830,7 +836,7 @@
       case 'kal-del': {
         const e = m.e;
         closeModal();
-        confirmBox('Usunąć wydarzenie?', (TY[e.typ] || {}).n + ' – ' + plDate(e.data), 'Usuń', () => {
+        confirmBox('Usunąć wydarzenie?', nm(e) + ' – ' + plDate(e.data), 'Usuń', () => {
           commitEvent(Object.assign({}, e, { del: true })); render();
         });
         return true;
@@ -840,6 +846,7 @@
   }
   function change(ch, v, el) {
     switch (ch) {
+      case 'harm-real': case 'harm-dow': case 'harm-co': case 'harm-start': case 'harm-name': case 'hsms-all': case 'hsms-hi': case 'hsms-p': return harmChange(ch, v, el);
       case 'grob-w': {
         const sel = selected(), name = document.getElementById('grpName').value;
         modalState.wsp[+v] = el.value; renderGrob(sel, name); return true;
@@ -941,7 +948,7 @@
     const place = e => [e.gdzie, e.miasto, e.adres].filter(Boolean).join(', ');
     if (evItems.length === 1 && (one || items.length === 1)) {   // jedno spotkanie – zwykłe zdania
       const e = evItems[0].e, w = whenHuman(e, true), pl = place(e);
-      lines.push('✝ ' + (TY[e.typ] || TY['p-og']).n + ' – ' + w + (pl ? ', ' + pl : '') + '.');
+      lines.push('✝ ' + nm(e) + ' – ' + w + (pl ? ', ' + pl : '') + '.');
       if (CEL_OF[e.typ] && e.celData) lines.push('Przygotowujemy ' + (CEL_OF[e.typ] === 'eu' ? 'Eucharystię' : 'Liturgię Słowa') + ': ' + ACC[fromIso(e.celData).getDay()] + ' ' + dm(e.celData) + ((e.celGodz || (celOf(e) || {}).godz) ? ' o ' + (e.celGodz || celOf(e).godz) : '') + '.');
       if (PREP_OF[e.typ]) prepsOf(e).slice(0, 1).forEach(p => lines.push('Przygotowanie: ' + ACC[fromIso(p.data).getDay()] + ' ' + dm(p.data) + (p.godz ? ' o ' + p.godz : '') + (p.gdzie ? ', ' + p.gdzie : '') + '.'));
       items.filter(i => i.f).forEach(i => lines.push('✠ ' + i.f));
@@ -956,7 +963,7 @@
         if (!one && i.d !== lastD) { lines.push('', SH[fromIso(i.d).getDay()] + ' ' + dm(i.d) + ':'); lastD = i.d; }
         if (i.f) { lines.push('✠ ' + i.f); return; }
         const e = i.e, w = whenHuman(e, false), pl = place(e);
-        lines.push('• ' + (TY[e.typ] || TY['p-og']).n + (w ? (/^o /.test(w) ? ' ' : ', ') + w : '') + (pl ? ', ' + pl : ''));   // wiele wydarzeń: tylko co, kiedy, gdzie
+        lines.push('• ' + nm(e) + (w ? (/^o /.test(w) ? ' ' : ', ') + w : '') + (pl ? ', ' + pl : ''));   // wiele wydarzeń: tylko co, kiedy, gdzie
       });
     }
     lines.push('', 'Do zobaczenia! Niech Pan nas prowadzi.');
@@ -1112,7 +1119,7 @@
     const e = prepEvent(v);
     if (e) {
       const ps = prepsOf(e);
-      return '<div class="muted mt">📅 W kalendarzu: ' + esc(TY[e.typ].n) + ' · ' + plDate(e.data) + (e.godz ? ' ' + esc(e.godz) : '') + ' <a class="link inl" data-act="kal-edit" data-a="' + e.id + '">pokaż ›</a></div>' +
+      return '<div class="muted mt">📅 W kalendarzu: ' + esc(nm(e)) + ' · ' + plDate(e.data) + (e.godz ? ' ' + esc(e.godz) : '') + ' <a class="link inl" data-act="kal-edit" data-a="' + e.id + '">pokaż ›</a></div>' +
         (ps.length ? ps.map(p => '<div class="muted">📖 Spotkanie przygotowania: ' + plDate(p.data) + (p.godz ? ' ' + esc(p.godz) : '') + (p.gdzie ? ', ' + esc(p.gdzie) : '') + ' <a class="link inl" data-act="kal-edit" data-a="' + p.id + '">pokaż ›</a></div>').join('')
           : '<button class="btn text full" data-act="kal-prepnew" data-a="' + e.id + '">＋ Zaplanuj spotkanie przygotowania</button>');
     }
@@ -1146,13 +1153,219 @@
     const p = prepsOf(e).filter(x => x.data).sort((a, b) => a.data.localeCompare(b.data))[0];
     return p ? extraLines(p, { team: false }) : [];
   }
+
+  /* ===================== HARMONOGRAMY PRZYGOTOWAŃ (osobno od kalendarza) ===================== */
+  // S.harms = [{ id, nazwa, typ: eu|ls|dt|in, dow, co (co ile tygodni), start, order:[gid], real:{data: gid|'r'|'m'|'x'}, team:{data:[osoby]}, weeks }]
+  const DOWN = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
+  const HTYP = { eu: 'Eucharystia', ls: 'Liturgia Słowa', dt: 'Duży temat', in: 'Inne' };
+  function myGrp() { return (S.grupy || []).find(g => (g.osoby || []).indexOf(S.owner) >= 0); }
+  function nextDow(dow, from) { const d = from ? fromIso(from) : new Date(); d.setHours(0, 0, 0, 0); while (d.getDay() !== dow) d.setDate(d.getDate() + 1); return d; }
+  function harms() {
+    ensure();
+    if (!S.harms) { S.harms = []; if (S.harm) { S.harms.push(Object.assign({ id: uuid(), nazwa: 'Eucharystia', typ: 'eu', co: 1, team: {} }, S.harm)); delete S.harm; } }
+    S.harms.forEach(H => { if (!H.real) H.real = {}; if (!H.team) H.team = {}; if (!H.order) H.order = []; if (!H.co) H.co = 1; H.order = H.order.filter(id => (S.grupy || []).some(g => g.id === id)); });
+    return S.harms;
+  }
+  function newHarm(typ) {
+    const ids = (S.grupy || []).map(g => g.id), me = myGrp(), i = me ? ids.indexOf(me.id) : 0, dow = typ === 'ls' ? 3 : 6;
+    return { id: uuid(), nazwa: HTYP[typ] || 'Harmonogram', typ: typ, dow: dow, co: typ === 'dt' ? 4 : 1, start: iso(nextDow(dow)), order: ids.slice(i).concat(ids.slice(0, i)), real: {}, team: {}, weeks: 12 };
+  }
+  const hById = id => harms().find(h => h.id === id);
+  const gName = id => id === 'r' ? 'grupa robocza' : id === 'm' ? 'ekipa złożona ręcznie' : ((S.grupy || []).find(g => g.id === id) || { nazwa: '?' }).nazwa;
+  /** Terminy z przydziałem: kolejka; inna grupa z rozkładu – zamiana miejscami; robocza/ręczna – grupa z planu idzie na następny termin; 'x' – pominięty. */
+  function harmPlan(H, nFut) {
+    const Q = H.order.slice(), out = [], td = iso(new Date());
+    if (!Q.length) return out;
+    let d = fromIso(H.start), fut = 0;
+    for (let k = 0; k < 520 && fut < nFut; k++, d = addDays(d, 7 * (H.co || 1))) {
+      const di = iso(d), r = H.real[di];
+      if (r === 'x') { out.push({ d: di, skip: true }); if (di >= td) fut++; continue; }
+      const plan = Q[0]; let who = plan;
+      if (r && r !== plan && Q.indexOf(r) > 0) { Q[Q.indexOf(r)] = plan; Q[0] = r; who = r; Q.push(Q.shift()); }
+      else if (r === 'r' || r === 'm') who = r;
+      else Q.push(Q.shift());
+      out.push({ d: di, plan: plan, who: who, real: r || '' });
+      if (di >= td) fut++;
+    }
+    return out;
+  }
+  /** Kto wg harmonogramu danego rodzaju (eu/ls) przygotowuje danego dnia albo najbliżej. */
+  function harmHint(typ, di) {
+    const H = harms().find(h => h.typ === typ); if (!H) return null;
+    const td = iso(new Date()), x = harmPlan(H, 30).find(y => !y.skip && (di ? y.d === di : y.d >= td));
+    return x ? { d: x.d, who: x.who, name: gName(x.who), id: H.id } : null;
+  }
+  function harmFor(di) { const x = harmHint('eu', di); return x ? x.who : ''; }
+  function teamOf(H, x) { if (H.team[x.d] && H.team[x.d].length) return H.team[x.d]; const g = (S.grupy || []).find(y => y.id === x.who); return g ? g.osoby.slice() : []; }
+
+  function harmList() {
+    const L = harms(), me = myGrp();
+    if (!(S.grupy || []).length) return '<div class="card"><h2>Harmonogramy</h2><div class="muted">Najpierw utwórz grupy (Wspólnota → Grupy).</div></div>';
+    let h = '<div class="card"><h2>Harmonogramy przygotowań</h2><div class="muted">Grupy po kolei – osobno dla Eucharystii, Liturgii Słowa, dużych tematów. Nie mieszają się z kalendarzem.</div>';
+    L.forEach(H => {
+      const td = iso(new Date()), P = harmPlan(H, 3).filter(x => x.d >= td && !x.skip), mine = me ? harmPlan(H, 26).find(x => x.d >= td && x.who === me.id) : null;
+      h += '<div class="hcard" data-act="harm-open" data-a="' + H.id + '"><div class="row"><b class="grow">' + esc(H.nazwa) + '</b><span class="muted">' + DOWN[H.dow] + (H.co > 1 ? ', co ' + H.co + ' tyg.' : ', co tydzień') + ' ›</span></div>' +
+        '<div class="muted">' + P.map(x => SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + ' – ' + esc(gName(x.who))).join(' · ') + '</div>' +
+        (mine ? '<div>Moja grupa: <b>' + SH[fromIso(mine.d).getDay()] + ' ' + dm(mine.d) + '</b></div>' : '') + '</div>';
+    });
+    h += '<div class="muted mt">Nowy harmonogram:</div><div class="chips">' + Object.keys(HTYP).map(t => '<button class="chip" data-act="harm-new" data-a="' + t + '">＋ ' + HTYP[t] + '</button>').join('') + '</div></div>';
+    return h + (L.length ? statsCard() : '');
+  }
+  function statsCard() {
+    const L = harms(), f = UI.hStat || '', td = iso(new Date());
+    const sel = L.filter(H => !f || H.id === f), byG = {}, byP = {}, swaps = [], skip = []; let rob = 0, rec = 0, all = 0;
+    sel.forEach(H => harmPlan(H, 1).filter(x => x.d <= td).forEach(x => {
+      if (x.skip) { skip.push(dm(x.d) + ' (' + H.nazwa + ')'); return; }
+      all++;
+      const g = byG[x.who] = byG[x.who] || { n: 0, last: '' }; g.n++; if (x.d > g.last) g.last = x.d;
+      if (x.who === 'r') rob++; else if (x.who === 'm') rec++;
+      if (x.real && x.who !== x.plan) swaps.push(dm(x.d) + ' – ' + gName(x.who) + ' zamiast: ' + gName(x.plan) + (f ? '' : ' (' + H.nazwa + ')'));
+      teamOf(H, x).forEach(b => { byP[b] = (byP[b] || 0) + 1; });
+    }));
+    const gl = Object.keys(byG).sort((a, b) => byG[b].n - byG[a].n), pl = Object.keys(byP).sort((a, b) => byP[b] - byP[a]);
+    const max = Math.max(1, ...gl.map(k => byG[k].n)), bar = (n, m) => '<span class="hbar"><i style="width:' + Math.round(100 * n / m) + '%"></i></span>';
+    return '<div class="card"><h2>📊 Statystyki</h2><div class="chips"><button class="chip sm' + (f ? '' : ' on') + '" data-act="harm-stat" data-a="">Wszystkie</button>' + L.map(H => '<button class="chip sm' + (f === H.id ? ' on' : '') + '" data-act="harm-stat" data-a="' + H.id + '">' + esc(H.nazwa) + '</button>').join('') + '</div>' +
+      (all || skip.length ? '<div class="sec">Ile razy przygotowała grupa (' + all + ' terminów)</div>' + gl.map(k => '<div class="row hst"><span class="grow">' + esc(gName(k)) + '</span>' + bar(byG[k].n, max) + '<b>' + byG[k].n + '</b><span class="muted">ost. ' + dm(byG[k].last) + '</span></div>').join('') +
+        '<div class="sec">Zamiany i zastępstwa</div>' + (swaps.length ? swaps.slice(-12).reverse().map(x => '<div class="muted">' + esc(x) + '</div>').join('') : '<div class="muted">Brak – wszystko wg rozkładu.</div>') +
+        '<div class="muted mt">Grupa robocza: ' + rob + ' · ekipa ręczna: ' + rec + '</div>' +
+        '<div class="sec">Osoby – ile razy w ekipie</div>' + (pl.length ? '<div class="chips">' + pl.map(b => '<span class="chip sm">' + esc(b) + ' <b>' + byP[b] + '</b></span>').join('') + '</div>' : '<div class="muted">Brak danych.</div>') +
+        '<div class="sec">Pominięte terminy: ' + skip.length + '</div>' + (skip.length ? '<div class="muted">' + skip.slice(-10).map(esc).join(', ') + '</div>' : '')
+        : '<div class="muted">Statystyki pojawią się po pierwszych terminach.</div>') + '</div>';
+  }
+  function harmView() {
+    const H = hById(UI.harmId); if (!H) return harmList();
+    const td = iso(new Date()), me = myGrp();
+    const P = harmPlan(H, H.weeks || 12), past = P.filter(x => x.d < td).slice(-4), fut = P.filter(x => x.d >= td);
+    const sel = x => '<select data-ch="harm-real" data-a="' + x.d + '"><option value="">✓ wg rozkładu (' + esc(gName(x.plan)) + ')</option>' +
+      H.order.filter(id => id !== x.plan).map(id => '<option value="' + id + '"' + (x.real === id ? ' selected' : '') + '>przygotowała: ' + esc(gName(id)) + '</option>').join('') +
+      '<option value="r"' + (x.real === 'r' ? ' selected' : '') + '>grupa robocza</option><option value="m"' + (x.real === 'm' ? ' selected' : '') + '>ekipa złożona ręcznie</option><option value="x">nie było</option></select>';
+    const row = (x, isPast) => x.skip ? '<div class="row hrow skip"><b class="hd">' + SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + '</b><span class="grow muted">nie było <button class="btn text sm" data-act="harm-unx" data-a="' + x.d + '">cofnij</button></span></div>'
+      : '<div class="hrow' + (me && x.who === me.id ? ' mine' : '') + '"><div class="row"><b class="hd">' + SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + '</b><span class="grow">' + esc(gName(x.who)) + (me && x.who === me.id ? ' <span class="muted">(moja)</span>' : '') + '</span>' + (isPast || x.d === td ? sel(x) : '') + '</div>' +
+        ((x.who === 'r' || x.who === 'm') ? '<div class="muted" data-act="harm-team" data-a="' + x.d + '">Kto: ' + (H.team[x.d] && H.team[x.d].length ? esc(H.team[x.d].join(', ')) : 'dotknij, aby zaznaczyć osoby') + ' ›</div>' : '') + '</div>';
+    let h = '<div class="card"><h2>' + esc(H.nazwa) + '</h2><div class="muted">' + DOWN[H.dow] + (H.co > 1 ? ', co ' + H.co + ' tygodnie' : ', co tydzień') + ' · od ' + plDate(H.start) + '. Gdy przygotuje inna grupa niż w rozkładzie, zaznacz to – zamienią się miejscami.</div>' +
+      (past.length ? '<div class="sec">Ostatnie</div>' + past.map(x => row(x, true)).join('') : '') +
+      '<div class="sec">Najbliższe</div>' + fut.map(x => row(x, false)).join('') +
+      '<div class="chips mt">' + [8, 12, 26].map(n => '<button class="chip sm' + ((H.weeks || 12) === n ? ' on' : '') + '" data-act="harm-weeks" data-a="' + n + '">' + n + ' terminów</button>').join('') + '</div>' +
+      '<button class="btn full mt" data-act="harm-sms">✉ Wyślij harmonogram SMS-em</button></div>';
+    h += '<div class="card"><h2>Ustawienia</h2><label class="lbl">Nazwa</label><input type="text" data-ch="harm-name" value="' + esc(H.nazwa) + '">' +
+      '<div class="row"><div class="grow"><label class="lbl">Dzień</label><select data-ch="harm-dow">' + DOWN.map((n, i) => '<option value="' + i + '"' + (H.dow === i ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div>' +
+      '<div class="grow"><label class="lbl">Jak często</label><select data-ch="harm-co">' + [1, 2, 3, 4, 5, 6, 8, 12].map(n => '<option value="' + n + '"' + (H.co === n ? ' selected' : '') + '>' + (n === 1 ? 'co tydzień' : 'co ' + n + ' tyg.') + '</option>').join('') + '</select></div></div>' +
+      '<label class="lbl">Pierwszy termin</label><input type="date" data-ch="harm-start" value="' + H.start + '">' +
+      '<label class="lbl">Grupy biorące udział – kolejność</label>' +
+      H.order.map((id, i) => '<div class="row chk"><span class="grow">' + (i + 1) + '. ' + esc(gName(id)) + '</span><button class="icon mv" data-act="harm-mv" data-a="' + id + '" data-b="-1"' + (i ? '' : ' disabled') + '>▲</button><button class="icon mv" data-act="harm-mv" data-a="' + id + '" data-b="1"' + (i < H.order.length - 1 ? '' : ' disabled') + '>▼</button><button class="icon" data-act="harm-out" data-a="' + id + '" title="Nie bierze udziału">✕</button></div>').join('') +
+      ((S.grupy || []).filter(g => H.order.indexOf(g.id) < 0).length ? '<div class="muted mt">Nie biorą udziału (dotknij, aby dodać):</div><div class="chips">' + S.grupy.filter(g => H.order.indexOf(g.id) < 0).map(g => '<button class="chip sm" data-act="harm-in" data-a="' + g.id + '">＋ ' + esc(g.nazwa) + '</button>').join('') + '</div>' : '') +
+      '<button class="btn ghost full mt" data-act="harm-restart">↻ Zacznij od nowa: najbliższy termin – ' + esc(me ? me.nazwa : 'pierwsza grupa') + '</button>' +
+      '<button class="btn text full" data-act="harm-del">Usuń harmonogram</button></div>';
+    return h;
+  }
+  function harmText(H, who, all) {
+    const td = iso(new Date()), P = harmPlan(H, H.weeks || 12).filter(x => x.d >= td && !x.skip);
+    const g = who && (S.grupy || []).find(x => (x.osoby || []).indexOf(who) >= 0 && H.order.indexOf(x.id) >= 0);
+    const L = ['Harmonogram przygotowań – ' + H.nazwa + '.'];
+    if (g) { const mine = P.filter(x => x.who === g.id); L.push('Twoja grupa (' + g.nazwa + ') przygotowuje: ' + (mine.length ? mine.map(x => SH[fromIso(x.d).getDay()] + ' ' + dm(x.d)).join(', ') : 'w tym okresie brak') + '.'); }
+    if (all || !g) { L.push(''); P.forEach(x => L.push(SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + ' – ' + gName(x.who))); }
+    return L.join('\n');
+  }
+  function smsDialog() {
+    const H = hById(UI.harmId); if (!H) return;
+    const m = modalState && modalState.kind === 'hsms' ? modalState : (modalState = { kind: 'hsms', off: {}, all: false, hello: true });
+    const ppl = peopleOf([S.wspAktywna]), msg = n => (m.hello ? pokoj() + ', ' + firstName(n) + '!\n\n' : '') + harmText(H, n, m.all);
+    m.items = () => ppl.filter(p => !m.off[p.n]).map(p => ({ tel: p.tel, text: msg(p.n) }));
+    openModal('Harmonogram – SMS', '<div class="muted">Każdy dostaje terminy swojej grupy.</div>' +
+      '<label class="row mt"><input type="checkbox" data-ch="hsms-all"' + (m.all ? ' checked' : '') + '><span class="grow">Dołącz cały rozkład</span></label>' +
+      '<label class="row"><input type="checkbox" data-ch="hsms-hi"' + (m.hello ? ' checked' : '') + '><span class="grow">Powitanie „' + pokoj() + ', {imię}!”</span></label>' +
+      '<label class="lbl">Podgląd</label><div class="msgprev">' + esc(msg(S.owner)) + '</div>' +
+      '<label class="lbl">Do kogo</label>' + ppl.map(p => '<label class="row chk"><input type="checkbox" data-ch="hsms-p" data-a="' + esc(p.n) + '"' + (m.off[p.n] ? '' : ' checked') + '><span class="grow">' + esc(p.n) + '</span><span class="muted">' + (p.tel ? esc(p.tel) : 'brak numeru') + '</span></label>').join(''),
+      '<button class="btn" data-act="harm-smsgo">Dalej ▶</button>');
+  }
+  function teamDialog(d) {
+    const H = hById(UI.harmId); if (!H) return;
+    modalState = { kind: 'hteam', d: d };
+    const cur = H.team[d] || [];
+    openModal('Kto przygotował – ' + dm(d), '<div class="chips">' + S.bracia.map(b => '<button class="chip' + (cur.indexOf(b) >= 0 ? ' on' : '') + '" data-act="harm-tp" data-a="' + esc(b) + '">' + esc(b) + '</button>').join('') + '</div>', '<button class="btn" data-act="harm-tok">Gotowe</button>');
+  }
+  function harmAct(a, v, el) {
+    if (a === 'harm-open') { UI.harmId = v; go('harm1'); return true; }
+    if (a === 'harm-new') { const H = newHarm(v); harms().push(H); save(); UI.harmId = H.id; go('harm1'); return true; }
+    if (a === 'harm-stat') { UI.hStat = v; render(); return true; }
+    const H = hById(UI.harmId); if (!H) return true;
+    switch (a) {
+      case 'harm-weeks': H.weeks = +v; break;
+      case 'harm-mv': { const i = H.order.indexOf(v), j = i + (+el.dataset.b); if (i < 0 || j < 0 || j >= H.order.length) return true; H.order.splice(j, 0, H.order.splice(i, 1)[0]); break; }
+      case 'harm-out': H.order = H.order.filter(x => x !== v); break;
+      case 'harm-in': H.order.push(v); break;
+      case 'harm-unx': delete H.real[v]; break;
+      case 'harm-team': teamDialog(v); return true;
+      case 'harm-tp': { const t = H.team[modalState.d] = H.team[modalState.d] || [], i = t.indexOf(v); if (i >= 0) t.splice(i, 1); else t.push(v); save(); teamDialog(modalState.d); return true; }
+      case 'harm-tok': closeModal(); render(); return true;
+      case 'harm-sms': modalState = null; smsDialog(); return true;
+      case 'harm-smsgo': { const items = modalState.items(); sendAllAuto(items, null, H.nazwa); return true; }
+      case 'harm-del': confirmBox('Usunąć harmonogram „' + H.nazwa + '”?', 'Z historią zamian.', 'Usuń', () => { S.harms = harms().filter(x => x.id !== H.id); save(); go('harm'); }); return true;
+      case 'harm-restart': confirmBox('Zacząć od nowa?', 'Najbliższy termin (' + DOWN[H.dow] + ') przygotuje ' + (myGrp() ? myGrp().nazwa : 'pierwsza grupa') + ', dalej po kolei. Zapisane zamiany zostaną wyczyszczone.', 'Zacznij', () => {
+        const me = myGrp(), i = me ? H.order.indexOf(me.id) : -1;
+        if (i > 0) H.order = H.order.slice(i).concat(H.order.slice(0, i));
+        H.start = iso(nextDow(H.dow)); H.real = {}; H.team = {}; save(); render(); }); return true;
+      default: return false;
+    }
+    save(); render(); return true;
+  }
+  function harmChange(ch, v, el) {
+    if (ch.indexOf('hsms-') === 0) {
+      const m = modalState; if (!m || m.kind !== 'hsms') return true;
+      if (ch === 'hsms-all') m.all = el.checked; else if (ch === 'hsms-hi') m.hello = el.checked; else if (el.checked) delete m.off[v]; else m.off[v] = 1;
+      smsDialog(); return true;
+    }
+    const H = hById(UI.harmId); if (!H) return true;
+    switch (ch) {
+      case 'harm-real': if (el.value) H.real[v] = el.value; else delete H.real[v]; break;
+      case 'harm-dow': H.dow = +el.value; H.start = iso(nextDow(H.dow, H.start)); break;
+      case 'harm-co': H.co = +el.value; break;
+      case 'harm-start': if (el.value) { H.start = el.value; H.dow = fromIso(el.value).getDay(); } break;
+      case 'harm-name': H.nazwa = el.value.trim() || H.nazwa; save(true); return true;
+      default: return false;
+    }
+    save(); render(); return true;
+  }
+  /* ===== dane do raportu ===== */
+  function eventsIn(a, b) {
+    const out = [];
+    alive().forEach(e => {
+      let d = a, k = 0;
+      while (k++ < 200) {
+        const x = nextOcc(e, d); if (!x || x > b) break;
+        out.push({ d: x, n: nm(e), godz: e.godz || '', gdzie: [e.gdzie, e.miasto].filter(Boolean).join(', '), kol: (TY[e.typ] || {}).col || '#777' });
+        if (!isCyclic(e)) break;
+        d = iso(addDays(fromIso(x), 1));
+      }
+    });
+    Object.keys(Object.assign({}, feasts(+a.slice(0, 4)), +b.slice(0, 4) !== +a.slice(0, 4) ? feasts(+b.slice(0, 4)) : {})).forEach(k => {
+      if (k >= a && k <= b) (feasts(+k.slice(0, 4))[k] || []).filter(f => f.r === 'U').forEach(f => out.push({ d: k, n: '✠ ' + f.n, godz: '', gdzie: '', kol: '#C9A227', feast: true }));
+    });
+    return out.sort((x, y) => x.d.localeCompare(y.d) || x.godz.localeCompare(y.godz));
+  }
+  function harmRep(n) {
+    const td = iso(new Date());
+    return harms().map(H => ({ nazwa: H.nazwa, typ: H.typ, co: H.co, dow: H.dow, rows: harmPlan(H, n).filter(x => x.d >= td && !x.skip).map(x => ({ d: x.d, who: gName(x.who) })) }));
+  }
+  function statsRep() {
+    const td = iso(new Date()), byG = {}, byP = {}, sw = []; let all = 0, skip = 0;
+    harms().forEach(H => harmPlan(H, 1).filter(x => x.d <= td).forEach(x => {
+      if (x.skip) { skip++; return; }
+      all++; const g = byG[x.who] = byG[x.who] || { n: 0, last: '' }; g.n++; if (x.d > g.last) g.last = x.d;
+      if (x.real && x.who !== x.plan) sw.push(dm(x.d) + ' – ' + gName(x.who) + ' zamiast: ' + gName(x.plan) + ' (' + H.nazwa + ')');
+      teamOf(H, x).forEach(b => { byP[b] = (byP[b] || 0) + 1; });
+    }));
+    return { all: all, skip: skip, grupy: Object.keys(byG).map(k => ({ n: gName(k), c: byG[k].n, last: byG[k].last })).sort((a, b) => b.c - a.c), osoby: Object.keys(byP).map(k => [k, byP[k]]).sort((a, b) => b[1] - a[1]), zamiany: sw };
+  }
   window.KAL = {
+    eventsIn: eventsIn, harmRep: harmRep, statsRep: statsRep,
     prepMeetText: prepMeetText, prepMeetExtras: prepMeetExtras, planText: planText,
     openPrep: openPrep, prepBar: prepBar, prepToCal: prepToCal,
     inTeam: inTeam, nextOcc: nextOcc, cycText: cycText, isCyclic: isCyclic, eventDialog: eventDialog, commitEvent: commitEvent, alive: alive, TY: TY, timeText: timeText,
     treeSearch: treeSearch,
     paschaCard: paschaCard,
     remSoon: remSoon, remSettings: remSettings, preparedBy: preparedBy,
+    harmView: harmView, harmList: harmList, harmFor: harmFor, harmHint: harmHint, harms: harms,
     act: act, change: change, view: viewKalendarz, groupsCard: groupsCard, groupChips: groupChips, startCard: startCard,
     ensure: ensure, syncReminders: syncReminders, feasts: feasts, groupsFor: groupsFor, concernsMe: concernsMe, syncKal: syncKal,
   };
