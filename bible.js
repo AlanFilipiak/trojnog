@@ -285,7 +285,7 @@
     h += '<div class="card bibtext' + (marg ? ' marg' : '') + '"><h2>' + esc(bookName(s.b)) + ' – rozdział ' + s.c + '</h2>';
     ch.forEach((e, i) => {
       if (!e) return;
-      const v = i + 1, hl = s.hl && v >= s.hl[0] && v <= s.hl[1], nn = (nt && nt[s.c + ',' + v]) || [];
+      const v = i + 1, hl = s.hlR ? s.hlR.some(r => v >= r[0] && v <= r[1]) : s.hl && v >= s.hl[0] && v <= s.hl[1], nn = (nt && nt[s.c + ',' + v]) || [];
       const bj = nn.filter(x => x[0] === 'bj'), km = nn.filter(x => x[0] === 'k');
       const refs = e[1] && o.r !== 'off' ? '<div class="brefs">' + parseRefs(e[1], s.b).map(r => '<button class="bref" data-act="bib-ref" data-a="' + esc(refLabel(r)) + '" data-b="' + v + '">' + esc(r.txt) + '</button>').join('') + '</div>' : '';
       let main = '<sup>' + v + '</sup> <span class="bvt" data-act="bib-v" data-a="' + v + '">' + esc(e[0]) + '</span>' + (inTree.has(v) ? ' <span class="bin" title="W skrutacji">✎</span>' : '');
@@ -366,7 +366,7 @@
     const s = st(), r = parseRefs(ref, s.b)[0];
     if (!r || !chap(r.b, r.c)) { toast('Nie znaleziono: ' + ref); return false; }
     if (push) s.back.push({ b: s.b, c: s.c, hl: s.hl, cur: s.cur });
-    s.b = r.b; s.c = r.c; s.hl = r.v1 ? [r.v1, r.v2 || r.v1] : null; s.res = null; s.sel = null; s.next = null;
+    s.b = r.b; s.c = r.c; s.hl = r.v1 ? [r.v1, r.v2 || r.v1] : null; s.hlR = null; s.res = null; s.sel = null; s.next = null;
     if (UI.view !== 'biblia') go('biblia'); else render();
     if (r.v1) scrollTo(r.v1); else document.getElementById('main').scrollTop = 0;
     return true;
@@ -378,7 +378,29 @@
     if (x) { x.odnosniki = (x.odnosniki ? x.odnosniki + ' → ' : '') + ref; x.ts = Date.now(); save(); }
   }
   /** Otwórz sygnaturę (przyciski 📖, skrutacja). skrId – pracuj w tej skrutacji. */
+  /* Pełne nazwy z czytań mszalnych: „Księga Przysłów 31,10-13.19-20.30-31”, „Pierwszy list do Tesaloniczan 5,1-6”, „Ewangelia wg św. Mateusza 25,14-30”. */
+  const STEMS = [['rodzaju', 'Rdz'], ['wyjścia', 'Wj'], ['kapłańsk', 'Kpl'], ['liczb', 'Lb'], ['powtórzonego', 'Pwt'], ['jozuego', 'Joz'], ['sędziów', 'Sdz'], ['księga rut', 'Rt'], ['samuela', 'Sm'], ['królewsk', 'Krl'],
+    ['kronik', 'Krn'], ['ezdrasza', 'Ezd'], ['nehemiasza', 'Ne'], ['tobiasza', 'Tb'], ['judyty', 'Jdt'], ['estery', 'Est'], ['machabejsk', 'Mch'], ['hioba', 'Hi'], ['psalm', 'Ps'], ['przysłów', 'Prz'], ['koheleta', 'Koh'],
+    ['eklezjastesa', 'Koh'], ['pieśni', 'Pnp'], ['syracha', 'Syr'], ['mądrości', 'Mdr'], ['izajasza', 'Iz'], ['jeremiasza', 'Jr'], ['lamentacj', 'Lm'], ['barucha', 'Ba'], ['ezechiela', 'Ez'], ['daniela', 'Dn'],
+    ['ozeasza', 'Oz'], ['joela', 'Jl'], ['amosa', 'Am'], ['abdiasza', 'Ab'], ['jonasza', 'Jon'], ['micheasza', 'Mi'], ['nahuma', 'Na'], ['habakuka', 'Ha'], ['sofoniasza', 'So'], ['aggeusza', 'Ag'], ['zachariasza', 'Za'],
+    ['malachiasza', 'Ml'], ['mateusza', 'Mt'], ['marka', 'Mk'], ['łukasza', 'Lk'], ['dzieje', 'Dz'], ['rzymian', 'Rz'], ['koryntian', 'Kor'], ['galatów', 'Ga'], ['efezjan', 'Ef'], ['filipian', 'Flp'], ['kolosan', 'Kol'],
+    ['tesaloniczan', 'Tes'], ['tymoteusza', 'Tm'], ['tytusa', 'Tt'], ['filemona', 'Flm'], ['hebrajczyków', 'Hbr'], ['jakuba', 'Jk'], ['piotra', 'P'], ['judy', 'Jud'], ['apokalips', 'Ap'], ['objawieni', 'Ap'], ['jana', 'J']];
+  const NUMB = ['Sm', 'Krl', 'Krn', 'Mch', 'Kor', 'Tes', 'Tm', 'P'];
+  function fromLong(str) {
+    const t = String(str || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const m = t.match(/^(\d\s*)?([^\d(]+?)\s*(\d{1,3})\s*(?:\(\d+\))?\s*(?:,\s*([\d\s.,a-z–-]+))?/);
+    if (!m || !/[a-ząćęłńóśźż]{4}/.test(m[2])) return null;
+    const name = m[2], st = STEMS.find(x => name.indexOf(x[0]) >= 0); if (!st) return null;
+    const num = m[1] ? m[1].trim() : /pierwsz/.test(name) ? '1' : /drug/.test(name) ? '2' : /trzeci/.test(name) ? '3' : '';
+    let b = st[1];
+    if (b === 'J' && /list/.test(name)) b = (num || '1') + 'J'; else if (NUMB.indexOf(b) >= 0) b = (num || '1') + b;
+    const c = +m[3], R = [];
+    String(m[4] || '').split(/[.;]/).forEach(seg => { if (/[-–]\s*\d+\s*,/.test(seg)) { R.push([parseInt(seg, 10), 999]); return; } const x = seg.replace(/[a-z\s]/g, '').split(/[-–]/).map(Number).filter(n => n > 0); if (x.length) R.push([x[0], x[x.length - 1] >= x[0] ? x[x.length - 1] : x[0]]); });
+    return { b: b, c: c, R: R, short: b + ' ' + c + (R.length ? ',' + R[0][0] + (R[0][1] !== R[0][0] ? '-' + R[0][1] : '') : '') };
+  }
   function open(ref, skrId) {
+    const L = !parseRefs(ref).some(r => chap(r.b, r.c)) ? fromLong(ref) : null;
+    if (L && chap(L.b, L.c)) { const s0 = st(); if (skrId !== undefined) { s0.skr = skrId || null; s0.path = []; s0.back = []; s0.cur = null; } goRef(L.short, false); s0.hlR = L.R.length ? L.R : null; render(); if (L.R.length) scrollTo(L.R[0][0]); return true; }
     const s = st();
     if (skrId !== undefined) {
       s.skr = skrId || null; s.path = []; s.back = []; s.cur = null;

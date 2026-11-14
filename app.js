@@ -667,6 +667,7 @@ function applySeason() {
 
 /* ===== CO NOWEGO (tylko większe zmiany) ===== */
 const CHANGES = [
+  ['14.6', ['📖 przy czytaniach mszalnych (np. „Księga Przysłów 31,10-13.19-20.30-31”, „Ewangelia wg św. Mateusza 25,14-30”) otwiera właściwy fragment w Biblii i zaznacza wszystkie wersety']],
   ['14.5', ['Kapłani: osobna sekcja we Wspólnocie z telefonem (✆ / ✉), kapłan może być przy kilku wspólnotach albo gościnnie (np. Pascha)', 'Kapłan jako użytkownik („Kim jesteś”) nie widzi listy wspólnoty ani Kasetki', 'Kapłani do wyboru przy blokach rozpisek']],
   ['14.4', ['Ekipa dużego tematu: od początku przygotowania do konwiwencji jej bracia są w grupach wyszarzeni (📜) i nie dochodzą do obecnych przy zaznaczaniu całej grupy; plakietka „duży temat” na liście']],
   ['14.3', ['Wspólnota: na dole „† Odeszli do Pana” – zmarli przechodzą tam z listy', 'SMS: „Wszyscy” – uczestniczący i na misji; „Wszyscy+” – także nieuczestniczący; zmarli nigdy (wiadomość, plan z kalendarza, harmonogramy)', 'Lista: osoby nieuczestniczące na końcu, pod zwijaną belką']],

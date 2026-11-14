@@ -50,7 +50,7 @@
 <div id="viewer" class="hidden"></div>
 <div id="lock" class="hidden"></div>
 <div id="toast" class="hidden"></div>
-<script>window.TROJNOG_VER="14.5";</script>
+<script>window.TROJNOG_VER="14.6";</script>
 <script src="shim.js"></script>
 <script>TROJNOG_BOOT(["data.js", "spiewnik.js", "app.js", "kalendarz.js", "konto.js", "zdjecia.js", "rozpiska.js", "bible.js", "historia.js", "katechezy.js", "wyglad.js", "kasa.js"]);
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(r=>{r.update();});let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded||!navigator.serviceWorker.controller)return;reloaded=true;if(window.toast)toast("Nowa wersja Trójnoga – uruchamiam ponownie…");setTimeout(()=>location.reload(),1200);});}</script>
