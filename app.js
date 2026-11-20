@@ -21,7 +21,7 @@ const CAT_SHORT = ['H', 'P', 'A', 'E'];
 const CAT_LABEL = ['Historyczne', 'Prorockie', 'Apostoł', 'Ewangelia'];
 const WISDOM = ['Hi', 'Prz', 'Koh', 'Mdr', 'Syr'];
 const NAV_OF = { start: 'start', temat: 'przyg', czytania: 'przyg', slowo: 'przyg', eucharystia: 'przyg', wiecej: 'wiecej', przyg: 'przyg', moje: 'przyg',
-  skrutacja: 'start', biblia: 'start', kkk: 'start', oglosz: 'start', slepiec: 'start', abc: 'start', harm: 'przyg', harm1: 'harm', hz: 'przyg', hz1: 'hz', wspolnota: 'wspolnota', spiewnik: 'start', biblioteka: 'start', slownik: 'start', archiwum: 'przyg', kalendarz: 'kalendarz', zdjecia: 'start', rozpiska: 'przyg', katechezy: 'start' };
+  skrutacja: 'start', biblia: 'start', kkk: 'start', oglosz: 'start', slepiec: 'start', abc: 'start', harm: 'przyg', harm1: 'harm', hz: 'przyg', hz1: 'hz', wspolnota: 'wspolnota', spiewnik: 'start', biblioteka: 'start', kantorzy: 'start', slownik: 'start', archiwum: 'przyg', kalendarz: 'kalendarz', zdjecia: 'start', rozpiska: 'przyg', katechezy: 'start' };
 const LIT_TABS = [['temat', 'Temat'], ['czytania', 'Czytania'], ['slowo', 'Liturgia Słowa']];
 function subnavToggle(show) {
   const sn = document.getElementById('subnav');
@@ -31,7 +31,7 @@ function subnavToggle(show) {
   sn.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.a === UI.view));
 }
 const TITLES = { abc: 'Neo ABC', slepiec: 'Modlitwa ślepca', hz: 'Historia zbawienia', hz1: 'Duży temat', harm: 'Harmonogramy', harm1: 'Harmonogram', oglosz: 'Ogłoszenia', przyg: 'Przygotowania', moje: 'Moje przygotowania', notatnik: 'Notatnik', wydatki: 'Kasetka', oapp: 'O aplikacji', start: 'Pokój Wam', temat: 'Temat', czytania: 'Czytania', slowo: 'Liturgia Słowa', eucharystia: 'Eucharystia',
-  wiecej: 'Ustawienia', skrutacja: 'Moja skrutacja', biblia: 'Biblia', kkk: 'Katechizm', wspolnota: 'Wspólnota', spiewnik: 'Śpiewnik', biblioteka: 'Biblioteka', slownik: 'Słownik Teologii Biblijnej', archiwum: 'Archiwum', kalendarz: 'Kalendarz', zdjecia: 'Zdjęcia', rozpiska: 'Rozpiska', katechezy: 'Katechezy' };
+  wiecej: 'Ustawienia', skrutacja: 'Moja skrutacja', biblia: 'Biblia', kkk: 'Katechizm', wspolnota: 'Wspólnota', spiewnik: 'Śpiewnik', biblioteka: 'Biblioteka', kantorzy: 'Kantorzy', slownik: 'Słownik Teologii Biblijnej', archiwum: 'Archiwum', kalendarz: 'Kalendarz', zdjecia: 'Zdjęcia', rozpiska: 'Rozpiska', katechezy: 'Katechezy' };
 const LINKS = [
   ['Droga Neokatechumenalna – Polska', 'https://neocatechumenaleiter.org/pl/'],
   ['Droga Neokatechumenalna – na świecie', 'https://neocatechumenaleiter.org/'],
@@ -571,7 +571,7 @@ function render() {
   subnavToggle(false);
   const litBar = ['temat', 'czytania', 'slowo'].indexOf(v) >= 0 ? '<div class="littabs">' + LIT_TABS.map(t => '<button class="' + (t[0] === v ? 'on' : '') + '" data-act="tab" data-a="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' : '';
   main.innerHTML = litBar + ({ start: viewStart, temat: viewTemat, czytania: viewCzytania, slowo: viewCelebracja, eucharystia: viewEucharystia,
-    wiecej: viewWiecej, skrutacja: viewSkrutacja, slepiec: viewSlepiec, abc: () => window.ABC ? ABC.view() : '', hz: () => window.HZ ? HZ.view() : '', hz1: () => window.HZ ? HZ.viewTemat() : '', harm: () => window.KAL ? KAL.harmList() : '', harm1: () => window.KAL ? KAL.harmView() : '', oglosz: viewOglosz, biblia: () => window.BIB ? BIB.view() : '', kkk: () => window.BIB ? BIB.viewKKK() : '', wspolnota: viewWspolnota, spiewnik: viewSpiewnik, biblioteka: () => window.LIB ? LIB.view() : '', slownik: viewSlownik, archiwum: viewArchiwum, kalendarz: () => window.KAL ? KAL.view() : '', zdjecia: () => window.ZDJ ? ZDJ.view() : '', rozpiska: () => window.RZ ? RZ.view() : '', katechezy: () => window.KAT ? KAT.view() : '', wydatki: () => window.KASA ? KASA.view() : '', oapp: viewOApp, notatnik: viewNotatnik, przyg: viewPrzyg, moje: viewMoje }[v] || viewStart)();
+    wiecej: viewWiecej, skrutacja: viewSkrutacja, slepiec: viewSlepiec, abc: () => window.ABC ? ABC.view() : '', hz: () => window.HZ ? HZ.view() : '', hz1: () => window.HZ ? HZ.viewTemat() : '', harm: () => window.KAL ? KAL.harmList() : '', harm1: () => window.KAL ? KAL.harmView() : '', oglosz: viewOglosz, biblia: () => window.BIB ? BIB.view() : '', kkk: () => window.BIB ? BIB.viewKKK() : '', wspolnota: viewWspolnota, spiewnik: viewSpiewnik, biblioteka: () => window.LIB ? LIB.view() : '', kantorzy: () => window.CEL ? CEL.view() : '', slownik: viewSlownik, archiwum: viewArchiwum, kalendarz: () => window.KAL ? KAL.view() : '', zdjecia: () => window.ZDJ ? ZDJ.view() : '', rozpiska: () => window.RZ ? RZ.view() : '', katechezy: () => window.KAT ? KAT.view() : '', wydatki: () => window.KASA ? KASA.view() : '', oapp: viewOApp, notatnik: viewNotatnik, przyg: viewPrzyg, moje: viewMoje }[v] || viewStart)();
   deskCols(main, v);
   mainBtn();
   setTimeout(() => {   // pierwsze uruchomienie: powitanie, potem chmurki na głównych ekranach (raz na ekran)
@@ -668,6 +668,8 @@ function applySeason() {
 
 /* ===== CO NOWEGO (tylko większe zmiany) ===== */
 const CHANGES = [
+  ['15.9', ['▶ Tryb na celebrację (Liturgia Słowa i Eucharystia): krok po kroku – kto, czytanie, pieśń w Twojej tonacji; duży tekst, ekran nie gaśnie', 'Kantorzy: pieśni z przygotowań + własne, suwak tonacji, wydruk wszystkich w wybranych tonacjach', 'Widżety na ekran główny: najbliższe spotkania, odliczanie (Pascha, Popielec, Adwent…), kalendarz miesiąca', 'Biblioteka: zakładki Śpiewnik i Słownik (z wyszukiwarką) oraz Śpiewnik z nutami – przy pieśni przycisk „♫ Nuty” (po zeskanowaniu pliku z nutami)', '＋ Książka – dodaj dowolny PDF; dostaje ikonę z pierwszą literą nazwy, którą możesz pokazać na ekranie głównym (też Mszalik, Tematy…)']],
+  ['15.8', ['Biblioteka: działają odnośniki w PDF (spis treści Mszalika itd.) – dotknij, przeskakuje; ↩ wraca', 'Mszalik: pełny spis z zakładek pliku; tytuł w podglądzie pokazuje bieżący rozdział', 'Czytania (przygotowanie Liturgii Słowa): przy każdym czytaniu 📜 – otwiera to czytanie z pliku „Tematy” (hasło → tabela → czytanie)', 'Duże pliki PDF czytane częściami – mniej pamięci, szybciej']],
   ['15.7', ['Śpiewnik: zmiana tonacji ♭ / ♯ – akordy podmieniają się na stronie pieśni, aplikacja pamięta tonację każdej pieśni; 🖨 drukuj pieśń w wybranej tonacji', 'Biblioteka: Mszalik, Pesach i Tematy (czytania do haseł) – wskazujesz swój plik PDF, szukanie po tekście, spis treści, tematy prekatechumenatu; w Słowniku przycisk „📜 Czytania”', 'Wygląd: własne czcionki (np. Neocat) do nagłówków i tekstów', 'Śpiewnik: „📊 Najczęściej śpiewane” – statystyki pieśni ze wszystkich celebracji w archiwum (razem / Liturgia Słowa / Eucharystia)', 'Archiwum Eucharystii zapamiętuje też wybrane pieśni']],
   ['15.6', ['„👥 Wszystkim to samo” – każdy dostaje osobny SMS, więc odpowiedzi wracają tylko do Ciebie (nie na czat grupowy)', 'Zmienne pożegnania w SMS (Odwagi!, Nie lękajcie się!…); w Oktawie Wielkanocy: „Chrystus zmartwychwstał!” na początek i „Prawdziwie zmartwychwstał!” na koniec', 'Przypomnienia → „Rozesłanie zaproszeń SMS”: dzień przed Eucharystią, Liturgią Słowa, pokutną i Konwiwencją o 18:15 – gotowe zaproszenie („Pokój, Alan! Zapraszam Cię na Eucharystię jutro…”)', 'Harmonogram: „⊘ pomiń” przy najbliższych terminach – gdy wypada inna celebracja, kolejka przesuwa się dalej', 'Link: Spotkania z Kiko (po polsku)']],
   ['15.5', ['Linki: dodano stronę spotkania.neokatechumenat.org.pl']],
@@ -817,6 +819,7 @@ const ICONS = {
   harm: '<rect class="f" x="7" y="10" width="34" height="30" rx="4"/><path d="M7 18h34M15 6v8M33 6v8"/><path d="M14 25h6M14 32h6M26 25h8M26 32h8" class="fl"/>',
   oglosz: '<path class="f" d="M8 20l22-9v26L8 28z"/><path d="M30 11l8-3v32l-8-3M8 20v8M13 30l3 9h5l-2-8"/>',
   biblia: '<path class="f" d="M24 12c-5-3-11-4-17-3v26c6-1 12 0 17 3 5-3 11-4 17-3V9c-6-1-12 0-17 3z"/><path d="M24 12v26"/><path d="M11 16c3 0 6 1 9 2M11 21c3 0 6 1 9 2M28 18c3-1 6-2 9-2M28 23c3-1 6-2 9-2"/>',
+  kantorzy: '<path class="f" d="M18 34V12l20-5v22"/><circle class="f" cx="13" cy="34" r="5"/><circle class="f" cx="33" cy="29" r="5"/><path d="M18 18l20-5"/>',
   biblioteka: '<path class="f" d="M8 8h8v32H8zM18 8h8v32h-8z"/><path class="f" d="M29 10l7-2 7 30-7 2z"/><path d="M10 14h4M20 14h4M10 34h4M20 34h4"/>',
   kkk: '<path class="f" d="M12 6h22c2 0 3 1 3 3v31c0 1-1 2-2 2H14c-2 0-3-1-3-3V8c0-1 0-2 1-2z"/><path d="M24 12v14M18 17h12" class="fl"/><path d="M16 32h16M16 36h11"/>',
   notatnik: '<rect class="f" x="11" y="7" width="26" height="35" rx="3"/><path d="M8 13h6M8 20h6M8 27h6M8 34h6"/><path d="M17 15h14M17 21h14M17 27h9"/><path d="M33 31l6-6 3 3-6 6-4 1z" class="fl"/>',
@@ -896,7 +899,10 @@ function viewMoje() {
     '<button class="btn ghost full mt" data-act="tab" data-a="archiwum">Archiwum Liturgii Słowa ›</button></div>';
 }
 
-function icon(k) { return '<svg viewBox="0 0 48 48" class="sk"><g filter="url(#sketch)">' + ICONS[k] + '</g></svg>'; }
+function icon(k) {
+  const lib = !ICONS[k] && /^lib:/.test(k) && window.LIB ? LIB.letterIcon((LIB.tiles().find(t => t[0] === k) || [0, '?'])[1]) : '';
+  return '<svg viewBox="0 0 48 48" class="sk"><g filter="url(#sketch)">' + (lib || ICONS[k] || '') + '</g></svg>';
+}
 
 const TILES = [
   ['przyg', 'Przygotowania', 'nowe: Liturgia, Eucharystia, rozpiski'],
@@ -910,7 +916,8 @@ const TILES = [
   ['kkk', 'Katechizm', 'KKK – szukaj po numerze i słowie'],
   ['slownik', 'Słownik', 'Teologii Biblijnej'],
   ['spiewnik', 'Śpiewnik', 'pieśni, tonacje, wyszukiwarka'],
-  ['biblioteka', 'Biblioteka', 'Mszalik, Pesach, Tematy – szukaj'],
+  ['kantorzy', 'Kantorzy', 'tonacje pieśni, wydruk dla kantorów'],
+  ['biblioteka', 'Biblioteka', 'śpiewnik, słownik, mszalik, nuty, Tematy, Twoje książki'],
   ['kalendarz', 'Kalendarz', 'celebracje, przygotowania, święta'],
   ['katechezy', 'Katechezy', 'głoszenia na mapie, zaproszenia'],
   ['zdjecia', 'Zdjęcia', 'aparat i album'],
@@ -942,9 +949,10 @@ function linksDialog() {
 /** Kafelki w kolejności ustawionej przez użytkownika (nowe dopisują się na końcu). */
 function tilesOrdered() {
   const okT = t => t[0] !== 'wydatki' || (!isPriestMe() && (window.KASA ? KASA.any() : !!S.kasaOk));   // przed wczytaniem kasa.js – ostatnio zapamiętane uprawnienie
-  const ord = (S.tileOrder || []).filter(id => TILES.some(t => t[0] === id));
-  const nowe = TILES.filter(t => ord.indexOf(t[0]) < 0), first = nowe.filter(t => t[0] === 'przyg' || t[0] === 'moje');
-  return first.concat(ord.map(id => TILES.find(t => t[0] === id))).concat(nowe.filter(t => first.indexOf(t) < 0)).filter(okT);
+  const ALL = TILES.concat(window.LIB ? LIB.tiles() : []);   // + książki z Biblioteki dodane do ekranu głównego
+  const ord = (S.tileOrder || []).filter(id => ALL.some(t => t[0] === id));
+  const nowe = ALL.filter(t => ord.indexOf(t[0]) < 0), first = nowe.filter(t => t[0] === 'przyg' || t[0] === 'moje');
+  return first.concat(ord.map(id => ALL.find(t => t[0] === id))).concat(nowe.filter(t => first.indexOf(t) < 0)).filter(okT);
 }
 /** Wybór katechisty do telefonu / SMS – ze wszystkich wspólnot. */
 function kcDialog() {
@@ -1468,10 +1476,11 @@ function viewCzytania() {
         '<button class="icon wa" data-act="send-mine" data-a="' + esc(p) + '" data-b="wa" title="WhatsApp">W</button></div>').join('') +
       '</div>';
   }
+  const temOk = window.LIB && LIB.temOk(S.haslo);
   CAT_NAMES.forEach((cn, ci) => {
     const rows = cats[ci].map((r, ri) => ri).filter(ri => !mine || who[ci][ri] === mine);
     h += '<div class="card"><h2>' + cn + ' (' + cats[ci].length + ')</h2>' +
-      (rows.length ? rows.map(ri => '<div class="rd' + (S.owner && who[ci][ri] === S.owner ? ' me' : '') + '"><span class="no">' + (ri + 1) + '.</span><span class="ref">' + esc(cats[ci][ri]) + '</span>' +
+      (rows.length ? rows.map(ri => '<div class="rd' + (S.owner && who[ci][ri] === S.owner ? ' me' : '') + '"><span class="no">' + (ri + 1) + '.</span><span class="ref">' + esc(cats[ci][ri]) + '</span>' + (temOk ? '<button class="icon bib" data-act="lib-ref" data-a="' + esc(cats[ci][ri]) + '" title="Czytanie z „Tematów”">📜</button>' : '') +
         (who[ci][ri] ? '<span class="tag' + (who[ci][ri] === S.owner ? ' me' : '') + '">' + esc(who[ci][ri]) + '</span>' : '') + '</div>').join('')
         : '<div class="muted">' + (cats[ci].length ? 'Brak czytań dla tej osoby.' : 'Brak czytań w tej kategorii.') + '</div>') +
       '</div>';
@@ -1489,7 +1498,8 @@ function wsNote() {
 function viewCelebracja() {
   const c = S.celebration;
   const cats = readings();
-  let h = wsNote() + '<div class="topic' + (S.haslo ? '' : ' empty') + '" style="text-align:left">' + (S.haslo ? esc(S.haslo) : 'Temat nie wybrany') + '</div>';
+  let h = wsNote() + '<div class="topic' + (S.haslo ? '' : ' empty') + '" style="text-align:left">' + (S.haslo ? esc(S.haslo) : 'Temat nie wybrany') + '</div>' +
+    '<button class="btn full mt" data-act="cel-mode" data-a="ls">▶ Tryb na celebrację</button>';
   h += '<div class="card"><h2>Kiedy i gdzie</h2><div class="row">' +
     '<div class="grow"><label class="lbl">Data celebracji</label><input type="date" data-in="cel-t" data-a="data" value="' + esc(c.data || '') + '"></div>' +
     '<div class="grow"><label class="lbl">Godzina</label><input type="time" data-in="cel-t" data-a="godz" value="' + esc(c.godz || '') + '"></div></div>' +
@@ -1690,7 +1700,7 @@ function viewArchiwum() {
 function viewEucharystia() {
   const e = S.eucharystia, ob = e.obecni;
   const all = ob.length >= aktywni().length && ob.length > 0;
-  let h = '<div class="card"><h2>Termin</h2><div class="row">' +
+  let h = '<button class="btn full" data-act="cel-mode" data-a="eu">▶ Tryb na celebrację</button>' + '<div class="card"><h2>Termin</h2><div class="row">' +
     '<div class="grow"><label class="lbl">Data</label><input type="date" data-in="eu-data" value="' + esc(e.data) + '"></div>' +
     '<div class="grow"><label class="lbl">Godzina Eucharystii</label><input type="time" data-in="eu-t" data-a="godzEu" value="' + esc(e.godzEu || '') + '"></div>' +
     '<div class="grow"><label class="lbl">Zbiórka</label><input type="time" data-in="eu-godz" value="' + esc(e.godzina) + '"></div>' +
@@ -2804,7 +2814,7 @@ function renderViewer() {
     const img = trOn || A.renderPdfAsync ? 'about:blank' : A.renderPdf ? A.renderPdf(key, PV.idx, w) : A.renderPage(PV.idx, w);
     if (A.renderPdfAsync && !trOn) { const idx = PV.idx; A.renderPdfAsync(key, idx, w).then(u => { const im = document.getElementById('pvimg'); if (im && PV && PV.idx === idx) im.src = u; })
       .catch(() => { const st = document.getElementById('pvstage'); if (st) st.innerHTML = '<div class="pvmsg">Nie udało się wyświetlić strony ' + (idx + 1) + '.</div>'; }); }
-    stage = img ? '<img id="pvimg" src="' + img + '" alt="" draggable="false">' : '<div class="pvmsg">Nie udało się wyświetlić strony ' + (PV.idx + 1) + '.</div>';
+    stage = img ? '<div class="pvwrap" id="pvwrap"><img id="pvimg" src="' + img + '" alt="" draggable="false"><div id="pvlinks"></div></div>' : '<div class="pvmsg">Nie udało się wyświetlić strony ' + (PV.idx + 1) + '.</div>';
   }
   const sp = PV.nr ? SP_BY[PV.nr] : null, ao = audioFor(sp, 'org'), ap = audioFor(sp, 'pl');
   v.innerHTML = '<div class="pvbar"><b class="grow">' + esc(PV.title) + '</b>' +
@@ -2827,7 +2837,7 @@ function closeViewer() {
   v.classList.add('hidden'); v.innerHTML = ''; PV = null;
 }
 function pvApply() {
-  const im = document.getElementById('pvimg');
+  const im = document.getElementById('pvwrap') || document.getElementById('pvimg');
   if (im) im.style.transform = 'translate(' + PVZ.x + 'px,' + PVZ.y + 'px) scale(' + PVZ.s + ')';
 }
 (function pvGestures() {
@@ -3633,7 +3643,7 @@ function stopScanner() {
   clearInterval(scanTimer); scanTimer = null;
   if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
 }
-window.onJoinLink = function (url) { go('start'); useCode(url); };
+window.onJoinLink = function (url) { const w = String(url).match(/^przygotowanie:\/\/widget\/(\w+)/); if (w) { closeModal(); go(w[1]); return; } go('start'); useCode(url); };
 
 async function showQr(w) {
   if (!window.qrcode) await loadScript('lib/qrcode.js');
@@ -3795,6 +3805,7 @@ document.addEventListener('click', ev => {
   if (window.KAT && KAT.act(act, a, el)) return;
   if (window.BIB && BIB.act(act, a, el)) return;
   if (window.LIB && LIB.act(act, a, el)) return;
+  if (window.CEL && CEL.act(act, a, el)) return;
   if (window.HZ && HZ.act(act, a, el)) return;
   if (window.ABC && ABC.act(act, a, el)) return;
   if (window.WYG && WYG.act(act, a, el)) return;
@@ -3806,7 +3817,7 @@ document.addEventListener('click', ev => {
   if (act === 'pick' && ev.target.closest('.eye')) return;
   const c = S.celebration;
   switch (act) {
-    case 'tab': subnavToggle(false); if (a === 'biblia' && window.BIB) BIB.plain(); go(a); return;
+    case 'tab': subnavToggle(false); if (/^lib:/.test(a) && window.LIB) { LIB.act('lib-tile', a.slice(4)); return; } if (a === 'biblia' && window.BIB) BIB.plain(); go(a); return;
     case 'liturgia': subnavToggle(); return;
     case 'mode': S.zPsalmami = a === '1'; save(); break;
     case 'draw-topic': {
@@ -4515,6 +4526,8 @@ document.addEventListener('change', ev => {
   if (window.HZ && HZ.change(ch, el.dataset.a, el)) return;
   if (window.RZ && RZ.change(ch, el.dataset.a, el)) return;
   if (window.WYG && WYG.change(ch, el.dataset.a, el)) return;
+  if (window.LIB && LIB.change(ch, el.dataset.a, el)) return;
+  if (window.CEL && CEL.change(ch, el.dataset.a, el)) return;
   const a = el.dataset.a, c = S.celebration;
   switch (ch) {
     case 'done': setDone(a, el.checked); break;
@@ -4591,6 +4604,7 @@ function autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHei
 window.onBack = function () {
   { const sn = document.getElementById('subnav'); if (sn && !sn.classList.contains('hidden')) { subnavToggle(false); return true; } }
   if (PV) { closeViewer(); return true; }
+  if (window.CEL && CEL.active()) { const bb = document.getElementById('cmBack'); if (bb) { bb.click(); return true; } CEL.close(); return true; }
   if (!document.getElementById('modal').classList.contains('hidden')) { closeModal(); return true; }
   if (UI.view === 'skrutacja' && UI.skr) { UI.skr = null; render(); return true; }
   if (window.BIB && BIB.back()) return true;

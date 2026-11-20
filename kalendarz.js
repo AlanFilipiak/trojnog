@@ -570,6 +570,20 @@
     openModal('🔔 Przypomnienie', due.map(d => '<div class="kev"><b>' + esc(d.x.title) + '</b><div class="muted">' + esc(plDate(d.x.d) + (d.x.godz ? ', ' + d.x.godz : '')) + '</div>' +
       (d.x.text ? '<div>' + esc(d.x.text) + '</div>' : '') + '</div>').join(''), '<button class="btn" data-act="przyp-ok">OK</button>');
   }
+  /** Widżety Androida: najbliższe wydarzenia (60 dni), daty do odliczania, kolor okresu. */
+  function widgetPush() {
+    if (!A || !A.setWidget) return;
+    try {
+      const t = new Date(), a = iso(t), y = t.getFullYear(), L = liturgy(t), cd = [];
+      [y, y + 1].forEach(Y => { const e = easter(Y);
+        cd.push({ n: 'Paschy', d: iso(addDays(e, -1)), c: '#C9A227' }, { n: 'Środy Popielcowej', d: iso(addDays(e, -46)), c: '#9C6ADE' }, { n: 'Pięćdziesiątnicy', d: iso(addDays(e, 49)), c: '#E5533D' },
+          { n: 'Adwentu', d: iso(adventStart(Y)), c: '#9C6ADE' }, { n: 'Bożego Narodzenia', d: Y + '-12-25', c: '#F3E2B6' }); });
+      const ev = eventsIn(a, iso(addDays(t, 60))).slice(0, 60).map(e => ({ d: e.d, g: e.godz || '', n: e.n, w: e.gdzie || '', c: e.kol, f: e.feast ? 1 : 0 }));
+      A.setWidget(JSON.stringify({ ev: ev, cd: cd, lit: L.name || '', litc: L.col || '' }));
+    } catch (e) { /* stary most */ }
+  }
+  setTimeout(widgetPush, 3000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') widgetPush(); });
   setTimeout(() => { invCheck(); inAppCheck(); }, 2500);
   setInterval(() => { if (document.visibilityState !== 'hidden') { invCheck(); inAppCheck(); } }, 60000);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => { invCheck(); inAppCheck(); }, 800); });
@@ -590,6 +604,7 @@
   }
   function nextRemText() { const l = remList(); return l.length ? 'Najbliższe: ' + new Date(l[0].at).toLocaleString('pl-PL', { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' – ' + l[0].title : 'Brak zaplanowanych przypomnień.'; }
   function syncReminders() {
+    clearTimeout(syncReminders.wt); syncReminders.wt = setTimeout(widgetPush, 1500);
     if (!A || !A.setReminders) return;
     const list = S.przyp.kan.tel ? remList() : [];
     try { A.setReminders(JSON.stringify(list.slice(0, 60))); } catch (er) { /* starsza wersja mostka */ }
