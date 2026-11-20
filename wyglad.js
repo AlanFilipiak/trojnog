@@ -118,8 +118,35 @@
       (BG ? '<div class="wy-bg" style="background-image:url(&quot;' + BG + '&quot;)"></div>' : '<div class="muted">Brak – tło jednolite.</div>') +
       '<div class="row mt"><button class="btn ghost grow" data-act="wy-bg">Wybierz zdjęcie</button>' + (BG ? '<button class="btn text" data-act="wy-bg-del">Usuń</button>' : '') + '</div>' +
       (BG ? '<label class="lbl">Widoczność tła (mgła)</label><input type="range" min="0.05" max="0.35" step="0.01" value="' + vis + '" data-ch="wy-vis">' : '') +
-      '<div class="muted mt">Tło jest mocno przymglone – w trybie jasnym i ciemnym tekst zostaje czytelny.</div></div>';
+      '<div class="muted mt">Tło jest mocno przymglone – w trybie jasnym i ciemnym tekst zostaje czytelny.</div></div>' + fontCard();
   }
+
+  /* ---------- własne czcionki (plik .otf/.ttf wczytany z telefonu – zostaje tylko na tym urządzeniu) ---------- */
+  const fonts = () => (S.fontList = S.fontList || []);
+  function fontCard() {
+    const L = fonts(), sel = (k, lbl) => '<label class="lbl">' + lbl + '</label><div class="chips">' +
+      [['', 'Domyślna']].concat(L.map(f => [f.id, f.name])).map(x => '<button class="chip sm' + ((S[k] || '') === x[0] ? ' on' : '') + '" data-act="wy-font" data-a="' + k + '|' + esc(x[0]) + '"' + (x[0] ? ' style="font-family:\'uf_' + esc(x[0]) + '\'"' : '') + '>' + esc(x[1]) + '</button>').join('') + '</div>';
+    return '<div class="card"><h2>Czcionki</h2>' + sel('fontCaps', 'Nagłówki i tytuły') + sel('fontSerif', 'Nazwy i teksty ozdobne') +
+      (L.length ? '<div class="muted mt">Wczytane: ' + L.map(f => esc(f.name) + ' <button class="btn text sm" data-act="wy-font-del" data-a="' + f.id + '">usuń</button>').join(' · ') + '</div>' : '') +
+      '<button class="btn ghost full mt" data-act="wy-font-add">＋ Wczytaj czcionkę (.otf / .ttf)</button>' +
+      '<div class="muted">Plik czcionki zostaje tylko w tym telefonie / komputerze – aplikacja go nie rozsyła.</div></div>';
+  }
+  function applyFonts() {
+    let css = '';
+    fonts().forEach(f => { const d = load('font_' + f.id + '.dat'); if (d) css += "@font-face{font-family:'uf_" + f.id + "';src:url(" + d + ");font-display:swap}"; });
+    let st = document.getElementById('userFonts'); if (!st) { st = document.createElement('style'); st.id = 'userFonts'; document.head.appendChild(st); }
+    st.textContent = css;
+    const r = document.documentElement.style, ok = id => id && fonts().some(f => f.id === id);
+    if (ok(S.fontCaps)) r.setProperty('--caps', "'uf_" + S.fontCaps + "', 'Cinzel', Georgia, serif"); else r.removeProperty('--caps');
+    if (ok(S.fontSerif)) r.setProperty('--serif', "'uf_" + S.fontSerif + "', 'EB Garamond', Georgia, serif"); else r.removeProperty('--serif');
+  }
+  window.onFontPicked = function (b64, name) {
+    if (!b64) return;
+    const id = Math.random().toString(36).slice(2, 8), nm = (name || 'Czcionka').split(/[\/:]/).pop().replace(/\.(otf|ttf|woff2?)$/i, '').replace(/[_-]+/g, ' ').trim().slice(0, 30) || 'Czcionka';
+    const mime = /\.ttf$/i.test(name || '') ? 'font/ttf' : 'font/otf';
+    store('font_' + id + '.dat', 'data:' + mime + ';base64,' + b64);
+    fonts().push({ id: id, name: nm }); save(true); applyFonts(); render2(); toast('Wczytano czcionkę „' + nm + '” – wybierz, gdzie ma być użyta.');
+  };
 
   function act(a, v, el) {
     switch (a) {
@@ -137,6 +164,13 @@
         CR = null; closeModal(); render2(); toast('Zapisano.');
         return true;
       }
+      case 'wy-font-add':
+        if (A && A.pickFont) { A.pickFont(); return true; }
+        { const i = document.createElement('input'); i.type = 'file'; i.accept = '.otf,.ttf,.woff,.woff2';
+          i.onchange = () => { const f = i.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => window.onFontPicked(String(r.result).split(',')[1], f.name); r.readAsDataURL(f); }; i.click(); }
+        return true;
+      case 'wy-font': { const p = v.split('|'); S[p[0]] = p[1]; save(true); applyFonts(); render2(); return true; }
+      case 'wy-font-del': S.fontList = fonts().filter(f => f.id !== v); ['fontCaps', 'fontSerif'].forEach(k => { if (S[k] === v) S[k] = ''; }); store('font_' + v + '.dat', ''); save(true); applyFonts(); render2(); return true;
       case 'wy-logo-del': LOGO = ''; store('logo.dat', ''); applyLogo(); render2(); return true;
       case 'wy-bg-del': BG = ''; store('bg.dat', ''); applyBg(); render2(); return true;
       case 'wy-pin': {
@@ -162,6 +196,6 @@
   }
 
   window.WYG = { card: card, act: act, change: change, hello: hello, applyLogo: applyLogo, applyBg: applyBg };
-  applyLogo(); applyBg();
+  applyLogo(); applyBg(); applyFonts();
   setTimeout(() => { if (!hello() && typeof showNewsOnce === 'function') showNewsOnce(); }, 600);
 })();

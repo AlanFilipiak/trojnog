@@ -13,7 +13,7 @@
     if (!Array.isArray(S.kal)) S.kal = [];
     S.kalView = S.kalView || 'all';
     S.przyp = Object.assign({ on: true, hour: 19 }, S.przyp || {});
-    S.przyp.co = Object.assign({ prep: true, czyt: true, eu: true, kal: true }, S.przyp.co || {});
+    S.przyp.co = Object.assign({ prep: true, czyt: true, eu: true, kal: true, zapr: false }, S.przyp.co || {});
     S.przyp.kiedy = S.przyp.kiedy || { '1d': true };
     S.przyp.kan = Object.assign({ tel: true, app: true, gcal: false }, S.przyp.kan || {});
     S.wspolnoty.forEach(w => { if (w.id !== S.wspAktywna && !Array.isArray(w.grupy)) w.grupy = []; });
@@ -302,7 +302,7 @@
       (e.agapa ? '<div>' + FISH + ' Agapa' + (e.agapaInfo ? ': ' + esc(e.agapaInfo) : '') + '</div>' : '') +
       (extrasShort(e) ? '<div>🎒 ' + esc(extrasShort(e)) + '</div>' : '') +
       linkRow(e) +
-      '<div class="row mt"><button class="btn text sm" data-act="kal-evsms" data-a="' + e.id + '">✉ Wyślij info o tym wydarzeniu</button></div>' +
+      '<div class="row mt"><button class="btn text sm" data-act="kal-evsms" data-a="' + e.id + '">✉ Wyślij info o tym wydarzeniu</button>' + (INV[e.typ] ? '<button class="btn text sm" data-act="kal-inv" data-a="' + e.id + '">💌 Zaproszenie</button>' : '') + '</div>' +
       (PREP_V[e.typ] ? '<div class="row mt"><button class="btn ghost sm" data-act="kal-prep" data-a="' + e.id + '">' + (CEL_OF[e.typ] ? 'Czytania, funkcje, zbiórka' : PREP_V[e.typ][1]) + ' ›</button></div>' : '') +
       (window.RZ && RZ.hasPlan(e) && RZ.canSee(e) ? '<div class="row mt"><button class="btn ghost sm" data-act="kal-rz" data-a="' + e.id + '">Przygotowanie – rozpiska ›</button>' +
         (e.typ === 'lp' && window.POK ? POK.btn(e) : '') + '</div>' : '') +
@@ -488,7 +488,7 @@
   }
 
   /* ---- przypomnienia (AlarmManager w aplikacji) ---- */
-  const REM_CO = [['prep', 'Moje przygotowanie (gdy jestem w ekipie)'], ['czyt', 'Moje czytanie lub funkcja w Liturgii Słowa'], ['eu', 'Moja funkcja w Eucharystii'], ['kal', 'Wszystkie wydarzenia wspólnoty z kalendarza']];
+  const REM_CO = [['prep', 'Moje przygotowanie (gdy jestem w ekipie)'], ['czyt', 'Moje czytanie lub funkcja w Liturgii Słowa'], ['eu', 'Moja funkcja w Eucharystii'], ['kal', 'Wszystkie wydarzenia wspólnoty z kalendarza'], ['zapr', 'Rozesłanie zaproszeń SMS – dzień przed Eucharystią, Liturgią Słowa, pokutną i Konwiwencją o 18:15 (gotowy SMS do wysłania)']];
   const REM_KIEDY = [['1h', '1 godz. przed'], ['3h', '3 godz. przed'], ['rano', 'rano tego dnia'], ['1d', 'dzień wcześniej'], ['2d', '2 dni wcześniej']];
   const REM_KAN = [['app', 'Monit w aplikacji'], ['tel', 'Powiadomienie w telefonie'], ['gcal', 'W Kalendarzu Google']];
   /** Początek wydarzenia (ms) w danym dniu; bez godziny – null. */
@@ -540,6 +540,7 @@
       if (r.at <= now) return;
       list.push({ id: x.id + ':' + x.d + ':' + r.k, at: r.at, title: (r.k === '1d' || r.k === '2d' ? (r.k === '1d' ? 'Jutro' : 'Pojutrze') + ' – ' : '') + x.title + (x.godz ? ' · ' + x.godz : ''), text: x.text || 'Pokój!' });
     }));
+    invDue().forEach(i => { if (i.at > now) list.push({ id: 'zapr:' + i.e.id + ':' + i.d, at: i.at, title: '✉ Roześlij zaproszenie: ' + nm(i.e) + ' jutro' + (i.e.godz ? ' · ' + i.e.godz : ''), text: 'Dotknij – SMS do wspólnoty jest gotowy' }); });
     return list.sort((a, b) => a.at - b.at);
   }
   /** Minuty przed początkiem – do przypomnień w Kalendarzu Google (wg wydarzenia z kalendarza). */
@@ -569,9 +570,9 @@
     openModal('🔔 Przypomnienie', due.map(d => '<div class="kev"><b>' + esc(d.x.title) + '</b><div class="muted">' + esc(plDate(d.x.d) + (d.x.godz ? ', ' + d.x.godz : '')) + '</div>' +
       (d.x.text ? '<div>' + esc(d.x.text) + '</div>' : '') + '</div>').join(''), '<button class="btn" data-act="przyp-ok">OK</button>');
   }
-  setTimeout(inAppCheck, 2500);
-  setInterval(() => { if (document.visibilityState !== 'hidden') inAppCheck(); }, 60000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(inAppCheck, 800); });
+  setTimeout(() => { invCheck(); inAppCheck(); }, 2500);
+  setInterval(() => { if (document.visibilityState !== 'hidden') { invCheck(); inAppCheck(); } }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => { invCheck(); inAppCheck(); }, 800); });
   /** Ustawienia → Ogólne: co, kiedy, którędy. */
   function remSettings() {
     const P = S.przyp;
@@ -816,6 +817,7 @@
         closeModal(); eventDialog(null, c.data, PREP_OF[c.typ]);
         Object.assign(modalState.e, { celId: c.id, celData: c.data, celGodz: c.godz || '', data: iso(addDays(fromIso(c.data), -2)) }); renderEventDialog(); return true;
       }
+      case 'kal-inv': { const e = alive().find(x => x.id === v); if (!e) return true; closeModal(); openInvite(e, nextOn(e, iso(new Date())) || e.data); return true; }
       case 'kal-evsms': { const e = alive().find(x => x.id === v); if (!e) return true;
         closeModal(); modalState = { kind: 'plan', only: e.id, range: 'd', day: e.data, ws: e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp], feasts: false, stage: 'pick', sent: {}, hello: 'imie', team: true, off: e.tylko ? Object.fromEntries(planPeople(e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp]).filter(p => (e.zapr || []).indexOf(p.n) < 0).map(p => [p.n, 1])) : {} };
         planDialog(); return true; }
@@ -914,6 +916,34 @@
   }
   const EXTRAS = [['pismo', '📖 Weź Pismo Święte i coś do pisania'], ['wyjazd', '🧳 Wyjazdowe – spakuj rzeczy (dni i noce policzą się same)'], ['stroj', '👔 Ładny, odświętny strój na Eucharystię']];
   const GEN = ['niedzieli', 'poniedziałku', 'wtorku', 'środy', 'czwartku', 'piątku', 'soboty'];
+  /** Pożegnanie: w Oktawie Wielkanocy „Prawdziwie zmartwychwstał!”, poza nią zmienne (to samo przez cały dzień). */
+  const BYES = ['Do zobaczenia! Niech Pan nas prowadzi.', 'Odwagi! Do zobaczenia.', 'Odwagi – Chrystus zwyciężył świat! Do zobaczenia.', 'Do zobaczenia! Niech Pan Was błogosławi.',
+    'Nie lękajcie się! Do zobaczenia.', 'Do zobaczenia! Maryja niech Was prowadzi.', 'Odwagi, bracia! Pan jest z nami.', 'Do zobaczenia! Bóg jest wierny.', 'Do zobaczenia! Z Panem Bogiem.', 'Odwagi! Pan nas kocha. Do zobaczenia.'];
+  function bye() { if (window.isOktawa && isOktawa()) return 'Prawdziwie zmartwychwstał!'; const d = new Date(); return BYES[(d.getFullYear() * 400 + d.getMonth() * 31 + d.getDate()) % BYES.length]; }
+  /** Zaproszenie na celebrację (SMS dzień wcześniej). */
+  const INV = { eu: 'Eucharystię', ls: 'Liturgię Słowa', lp: 'Liturgię pokutną', kon: 'Konwiwencję' };
+  function inviteText(e, d) {
+    const x = Object.assign({}, e, { data: d || e.data }), w = whenHuman(x, true), pl = [e.gdzie, e.miasto, e.adres].filter(Boolean).join(', '), tm = iso(addDays(new Date(), 1)) === x.data;
+    return 'Zapraszam Cię na ' + (INV[e.typ] || nm(e)) + (tm ? ' jutro, ' : ' ') + w + (pl ? ', ' + pl : '') + '.' + (e.agapa ? ' Po celebracji agapa.' : '') + '\n\n' + bye();
+  }
+  function openInvite(e, d) {
+    const ws = e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp];
+    const off = e.tylko ? Object.fromEntries(planPeople(ws).filter(p => (e.zapr || []).indexOf(p.n) < 0).map(p => [p.n, 1])) : Object.fromEntries(planPeople(ws).filter(p => !massOK(p.n)).map(p => [p.n, 1]));
+    modalState = { kind: 'plan', only: e.id, range: 'd', day: d || e.data, ws: ws, feasts: false, stage: 'queue', sent: {}, hello: 'imie', team: false, off: off, body: inviteText(e, d) };
+    planDialog();
+  }
+  function invDue() {
+    const P = S.przyp, out = [], today = iso(new Date());
+    if (!P.on || !P.co.zapr) return out;
+    alive().filter(e => INV[e.typ]).forEach(e => { const d = nextOn(e, today); if (!d) return; const t = addDays(fromIso(d), -1); t.setHours(18, 15, 0, 0); out.push({ e: e, d: d, at: t.getTime(), st: startAt(d, e.godz) || fromIso(d).getTime() + 864e5 }); });
+    return out;
+  }
+  function invCheck() {
+    if (modalState) return;
+    const now = Date.now(), seen = S.przypSeen = S.przypSeen || {};
+    const x = invDue().find(i => i.at <= now && now < i.st && !seen['zapr:' + i.e.id + ':' + i.d]); if (!x) return;
+    seen['zapr:' + x.e.id + ':' + x.d] = now; save(true); openInvite(x.e, x.d);
+  }
   const ACC = ['w niedzielę', 'w poniedziałek', 'we wtorek', 'w środę', 'w czwartek', 'w piątek', 'w sobotę'];
   const SH = ['nd', 'pn', 'wt', 'śr', 'czw', 'pt', 'sob'];
   const dm = d => { const x = fromIso(d); return x.getDate() + '.' + String(x.getMonth() + 1).padStart(2, '0'); };
@@ -981,11 +1011,11 @@
       });
       fl();
     }
-    lines.push('', 'Do zobaczenia! Niech Pan nas prowadzi.');
+    lines.push('', bye());
     return lines.join('\n');
   }
   function grabPlan() { const t = document.getElementById('planBody'); if (t && modalState) modalState.body = t.value; }
-  function planMsg(m, who) { const h = m.hello === true ? 'imie' : m.hello, nm = h === 'bracia' || !who ? 'bracia' : firstName(who); return (h ? pokoj() + ', ' + nm + '!\n\n' : '') + (m.body !== undefined ? m.body : planText(m)); }
+  function planMsg(m, who) { const h = m.hello === true ? 'imie' : m.hello, nm = h === 'bracia' || !who ? 'bracia' : firstName(who), b = m.body !== undefined ? m.body : planText(m); return (h ? pokoj() + ', ' + nm + '!\n\n' : '') + (nm === 'bracia' ? b.replace(/Zapraszam Cię/g, 'Zapraszam Was') : b); }
   function planDialog() {
     if (!modalState || modalState.kind !== 'plan') modalState = { kind: 'plan', off: Object.fromEntries(peopleOf(S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id]).filter(p => !massOK(p.n)).map(p => [p.n, 1])), range: '14', ws: S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id], feasts: false, stage: 'pick', sent: {}, hello: 'imie', team: false };
     const m = modalState;
@@ -994,7 +1024,7 @@
       openModal('Plan – wysyłka', '<label class="lbl">Treść (możesz poprawić' + (m.hello ? '; powitanie dopisze się samo' : '') + ')</label>' +
         '<textarea id="planBody" rows="9">' + esc(m.body !== undefined ? m.body : planText(m)) + '</textarea>' +
         '<button class="btn full mt" data-act="plan-auto">⚡ Wyślij wszystkim (osobno, od razu)</button>' +
-        '<button class="btn ghost full mt" data-act="plan-group">👥 Razem – jedna wiadomość grupowa</button>' +
+        '<button class="btn ghost full mt" data-act="plan-group">👥 Wszystkim to samo („Pokój, bracia!”) – każdy osobno</button>' +
         '<div class="muted mt">Albo pojedynczo: „✉ SMS” przy osobie – wyślij i wróć, następna czeka.</div>' +
         ppl.map(p => '<div class="row chk' + (m.sent[p.n] ? ' sent' : '') + '"><span class="grow">' + (m.sent[p.n] ? '✓ ' : '') + dot(p.n) + esc(p.n) +
           '<br><span class="muted">' + (p.tel ? esc(p.tel) : 'bez numeru – wybierzesz w SMS') + (m.ws.length > 1 ? ' · ' + esc(p.wsp) : '') + '</span></span>' +
@@ -1262,10 +1292,10 @@
     const sel = x => '<select data-ch="harm-real" data-a="' + x.d + '"><option value="">✓ wg rozkładu (' + esc(gName(x.plan)) + ')</option>' +
       H.order.filter(id => id !== x.plan).map(id => '<option value="' + id + '"' + (x.real === id ? ' selected' : '') + '>przygotowała: ' + esc(gName(id)) + '</option>').join('') +
       '<option value="r"' + (x.real === 'r' ? ' selected' : '') + '>grupa robocza</option><option value="m"' + (x.real === 'm' ? ' selected' : '') + '>ekipa złożona ręcznie</option><option value="x">nie było</option></select>';
-    const row = (x, isPast) => x.skip ? '<div class="row hrow skip"><b class="hd">' + SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + '</b><span class="grow muted">nie było <button class="btn text sm" data-act="harm-unx" data-a="' + x.d + '">cofnij</button></span></div>'
-      : '<div class="hrow' + (me && x.who === me.id ? ' mine' : '') + '"><div class="row"><b class="hd">' + SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + '</b><span class="grow">' + esc(gName(x.who)) + (me && x.who === me.id ? ' <span class="muted">(moja)</span>' : '') + '</span>' + (isPast || x.d === td ? sel(x) : '') + '</div>' +
+    const row = (x, isPast) => x.skip ? '<div class="row hrow skip"><b class="hd">' + SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + '</b><span class="grow muted">' + (x.d >= iso(new Date()) ? 'pominięty termin' : 'nie było') + ' <button class="btn text sm" data-act="harm-unx" data-a="' + x.d + '">cofnij</button></span></div>'
+      : '<div class="hrow' + (me && x.who === me.id ? ' mine' : '') + '"><div class="row"><b class="hd">' + SH[fromIso(x.d).getDay()] + ' ' + dm(x.d) + '</b><span class="grow">' + esc(gName(x.who)) + (me && x.who === me.id ? ' <span class="muted">(moja)</span>' : '') + '</span>' + (isPast || x.d === td ? sel(x) : '<button class="btn text sm" data-act="harm-skip" data-a="' + x.d + '" title="Tego dnia nie ma (np. inna celebracja) – kolejka przesuwa się dalej">⊘ pomiń</button>') + '</div>' +
         ((x.who === 'r' || x.who === 'm') ? '<div class="muted" data-act="harm-team" data-a="' + x.d + '">Kto: ' + (H.team[x.d] && H.team[x.d].length ? esc(H.team[x.d].join(', ')) : 'dotknij, aby zaznaczyć osoby') + ' ›</div>' : '') + '</div>';
-    let h = '<div class="card"><h2>' + esc(H.nazwa) + '</h2><div class="muted">' + DOWN[H.dow] + (H.co > 1 ? ', co ' + H.co + ' tygodnie' : ', co tydzień') + ' · od ' + plDate(H.start) + '. Gdy przygotuje inna grupa niż w rozkładzie, zaznacz to – zamienią się miejscami.</div>' +
+    let h = '<div class="card"><h2>' + esc(H.nazwa) + '</h2><div class="muted">' + DOWN[H.dow] + (H.co > 1 ? ', co ' + H.co + ' tygodnie' : ', co tydzień') + ' · od ' + plDate(H.start) + '. Gdy przygotuje inna grupa niż w rozkładzie, zaznacz to – zamienią się miejscami. „⊘ pomiń” – termin odpada (np. inna celebracja), kolejne grupy przesuwają się dalej.</div>' +
       (past.length ? '<div class="sec">Ostatnie</div>' + past.map(x => row(x, true)).join('') : '') +
       '<div class="sec">Najbliższe</div>' + fut.map(x => row(x, false)).join('') +
       '<div class="chips mt">' + [8, 12, 26].map(n => '<button class="chip sm' + ((H.weeks || 12) === n ? ' on' : '') + '" data-act="harm-weeks" data-a="' + n + '">' + n + ' terminów</button>').join('') + '</div>' +
@@ -1318,6 +1348,7 @@
       case 'harm-out': H.order = H.order.filter(x => x !== v); break;
       case 'harm-in': H.order.push(v); break;
       case 'harm-unx': delete H.real[v]; break;
+      case 'harm-skip': H.real[v] = 'x'; break;
       case 'harm-team': teamDialog(v); return true;
       case 'harm-tp': { const t = H.team[modalState.d] = H.team[modalState.d] || [], i = t.indexOf(v); if (i >= 0) t.splice(i, 1); else t.push(v); save(); teamDialog(modalState.d); return true; }
       case 'harm-tok': closeModal(); render(); return true;

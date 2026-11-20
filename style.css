@@ -293,6 +293,7 @@ main, .sheet { zoom: var(--z, 1); }
 .pvbar span { font-size: 13px; }
 .pvbar input { width: 64px; padding: 6px; text-align: center; background: #3a2a20; color: #fff; border: 1px solid #6a5440; border-radius: 8px; }
 button.pvb { border: 1px solid #6a5440; background: #3a2a20; color: #F3E2B6; border-radius: 10px; padding: 7px 12px; font-size: 15px; }
+.pvtr { color: #F3E2B6; font-size: 13px; min-width: 52px; text-align: center; }
 button.pvb.on { background: var(--burgundy); border-color: var(--gold); }
 .pvstage { flex: 1; overflow: hidden; display: flex; align-items: flex-start; justify-content: center; touch-action: none; background: #fff; }
 .pvstage img { width: 100%; height: auto; transform-origin: 50% 0; user-select: none; -webkit-user-drag: none; }
