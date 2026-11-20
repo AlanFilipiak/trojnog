@@ -21,7 +21,7 @@ const CAT_SHORT = ['H', 'P', 'A', 'E'];
 const CAT_LABEL = ['Historyczne', 'Prorockie', 'Apostoł', 'Ewangelia'];
 const WISDOM = ['Hi', 'Prz', 'Koh', 'Mdr', 'Syr'];
 const NAV_OF = { start: 'start', temat: 'przyg', czytania: 'przyg', slowo: 'przyg', eucharystia: 'przyg', wiecej: 'wiecej', przyg: 'przyg', moje: 'przyg',
-  skrutacja: 'start', biblia: 'start', kkk: 'start', oglosz: 'start', harm: 'przyg', harm1: 'harm', hz: 'przyg', hz1: 'hz', wspolnota: 'wspolnota', spiewnik: 'start', slownik: 'start', archiwum: 'przyg', kalendarz: 'kalendarz', zdjecia: 'start', rozpiska: 'przyg', katechezy: 'start' };
+  skrutacja: 'start', biblia: 'start', kkk: 'start', oglosz: 'start', slepiec: 'start', abc: 'start', harm: 'przyg', harm1: 'harm', hz: 'przyg', hz1: 'hz', wspolnota: 'wspolnota', spiewnik: 'start', slownik: 'start', archiwum: 'przyg', kalendarz: 'kalendarz', zdjecia: 'start', rozpiska: 'przyg', katechezy: 'start' };
 const LIT_TABS = [['temat', 'Temat'], ['czytania', 'Czytania'], ['slowo', 'Liturgia Słowa']];
 function subnavToggle(show) {
   const sn = document.getElementById('subnav');
@@ -30,11 +30,12 @@ function subnavToggle(show) {
   sn.classList.toggle('hidden', !on);
   sn.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.a === UI.view));
 }
-const TITLES = { hz: 'Historia zbawienia', hz1: 'Duży temat', harm: 'Harmonogramy', harm1: 'Harmonogram', oglosz: 'Ogłoszenia', przyg: 'Przygotowania', moje: 'Moje przygotowania', notatnik: 'Notatnik', wydatki: 'Kasetka', oapp: 'O aplikacji', start: 'Pokój Wam', temat: 'Temat', czytania: 'Czytania', slowo: 'Liturgia Słowa', eucharystia: 'Eucharystia',
+const TITLES = { abc: 'Neo ABC', slepiec: 'Modlitwa ślepca', hz: 'Historia zbawienia', hz1: 'Duży temat', harm: 'Harmonogramy', harm1: 'Harmonogram', oglosz: 'Ogłoszenia', przyg: 'Przygotowania', moje: 'Moje przygotowania', notatnik: 'Notatnik', wydatki: 'Kasetka', oapp: 'O aplikacji', start: 'Pokój Wam', temat: 'Temat', czytania: 'Czytania', slowo: 'Liturgia Słowa', eucharystia: 'Eucharystia',
   wiecej: 'Ustawienia', skrutacja: 'Moja skrutacja', biblia: 'Biblia', kkk: 'Katechizm', wspolnota: 'Wspólnota', spiewnik: 'Śpiewnik', slownik: 'Słownik Teologii Biblijnej', archiwum: 'Archiwum', kalendarz: 'Kalendarz', zdjecia: 'Zdjęcia', rozpiska: 'Rozpiska', katechezy: 'Katechezy' };
 const LINKS = [
   ['Droga Neokatechumenalna – Polska', 'https://neocatechumenaleiter.org/pl/'],
   ['Droga Neokatechumenalna – na świecie', 'https://neocatechumenaleiter.org/'],
+  ['Spotkania – Droga Neokatechumenalna w Polsce', 'https://spotkania.neokatechumenat.org.pl/'],
   ['Biblia Jerozolimska (PDF)', 'https://kazimierz.archibial.pl/docs/biblia_jerozolimska.pdf'],
   ['Słownik Teologii Biblijnej', 'https://docer.pl/doc/xe11ccn'],
 ];
@@ -279,7 +280,7 @@ function replacePerson(old, nw) {
     if (nw) S.kolory[nw] = S.kolory[old];
     delete S.kolory[old];
   }
-  ['maile', 'nieakt', 'ice', 'urodz', 'zmarli'].forEach(k => { if (S[k] && S[k][old] !== undefined) { if (nw) S[k][nw] = S[k][old]; delete S[k][old]; } });
+  ['maile', 'nieakt', 'ice', 'urodz', 'zmarli', 'katech'].forEach(k => { if (S[k] && S[k][old] !== undefined) { if (nw) S[k][nw] = S[k][old]; delete S[k][old]; } });
   const mz = curW() && curW().malz;
   if (mz && mz[old] !== undefined) { const sp = mz[old]; delete mz[old]; if (nw) { mz[nw] = sp; mz[sp] = nw; } else delete mz[sp]; }
 }
@@ -570,7 +571,7 @@ function render() {
   subnavToggle(false);
   const litBar = ['temat', 'czytania', 'slowo'].indexOf(v) >= 0 ? '<div class="littabs">' + LIT_TABS.map(t => '<button class="' + (t[0] === v ? 'on' : '') + '" data-act="tab" data-a="' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' : '';
   main.innerHTML = litBar + ({ start: viewStart, temat: viewTemat, czytania: viewCzytania, slowo: viewCelebracja, eucharystia: viewEucharystia,
-    wiecej: viewWiecej, skrutacja: viewSkrutacja, hz: () => window.HZ ? HZ.view() : '', hz1: () => window.HZ ? HZ.viewTemat() : '', harm: () => window.KAL ? KAL.harmList() : '', harm1: () => window.KAL ? KAL.harmView() : '', oglosz: viewOglosz, biblia: () => window.BIB ? BIB.view() : '', kkk: () => window.BIB ? BIB.viewKKK() : '', wspolnota: viewWspolnota, spiewnik: viewSpiewnik, slownik: viewSlownik, archiwum: viewArchiwum, kalendarz: () => window.KAL ? KAL.view() : '', zdjecia: () => window.ZDJ ? ZDJ.view() : '', rozpiska: () => window.RZ ? RZ.view() : '', katechezy: () => window.KAT ? KAT.view() : '', wydatki: () => window.KASA ? KASA.view() : '', oapp: viewOApp, notatnik: viewNotatnik, przyg: viewPrzyg, moje: viewMoje }[v] || viewStart)();
+    wiecej: viewWiecej, skrutacja: viewSkrutacja, slepiec: viewSlepiec, abc: () => window.ABC ? ABC.view() : '', hz: () => window.HZ ? HZ.view() : '', hz1: () => window.HZ ? HZ.viewTemat() : '', harm: () => window.KAL ? KAL.harmList() : '', harm1: () => window.KAL ? KAL.harmView() : '', oglosz: viewOglosz, biblia: () => window.BIB ? BIB.view() : '', kkk: () => window.BIB ? BIB.viewKKK() : '', wspolnota: viewWspolnota, spiewnik: viewSpiewnik, slownik: viewSlownik, archiwum: viewArchiwum, kalendarz: () => window.KAL ? KAL.view() : '', zdjecia: () => window.ZDJ ? ZDJ.view() : '', rozpiska: () => window.RZ ? RZ.view() : '', katechezy: () => window.KAT ? KAT.view() : '', wydatki: () => window.KASA ? KASA.view() : '', oapp: viewOApp, notatnik: viewNotatnik, przyg: viewPrzyg, moje: viewMoje }[v] || viewStart)();
   deskCols(main, v);
   mainBtn();
   setTimeout(() => {   // pierwsze uruchomienie: powitanie, potem chmurki na głównych ekranach (raz na ekran)
@@ -667,6 +668,15 @@ function applySeason() {
 
 /* ===== CO NOWEGO (tylko większe zmiany) ===== */
 const CHANGES = [
+  ['15.5', ['Linki: dodano stronę spotkania.neokatechumenat.org.pl']],
+  ['15.4', ['SMS z kalendarza: nagłówek „Plan na najbliższy czas” (zamiast „Najbliższe spotkania”); uroczystości ✠ jako osobny wybór w „Co ma być zawarte” (domyślnie wyłączone), w SMS-ie w osobnej sekcji „Uroczystości”, nie wśród spotkań; pojedynczy ✓ na przyciskach']],
+  ['15.3', ['SMS z kalendarza (zakres): „Co ma być zawarte” – Celebracje / Katechezy / Przygotowania / Inne do odznaczenia']],
+  ['15.2', ['Nowe rodzaje wydarzeń: Ogłoszenie Paschy, Ogłoszenie Adwentu, Spotkanie katechistów (od razu tylko dla zaproszonych – katechistów K), Pielgrzymka, Skrutacja']],
+  ['15.1', ['SMS z kalendarza: obok Wszyscy / Wszyscy+ / Nikt – wybór grupy i „K – katechiści”; przy wydarzeniu dla zaproszonych od razu zaznaczeni zaproszeni', 'Adwent: wieniec ze świecami – co tydzień zapala się kolejna, wcześniejsze się wypalają (kalendarz i Start)', 'Wspólnota: sekcja „Region” – osoby z regionu z funkcją, telefonem, adresem i e-mailem', '„Tylko dla zaproszonych” zamiast „tylko dla wybranych”']],
+  ['15.0', ['Wydarzenie „Tylko dla wybranych” (np. spotkanie katechistów): widzą je i dostają przypomnienie tylko zaznaczeni; szybki wybór „K – katechiści”', 'Osoba: znacznik K – katechista (na liście wspólnoty)']],
+  ['14.9', ['Nowy kafelek „Neo ABC” – słowniczek 48 pojęć (monicja, echo, didaskal, ostiariusz, kerygmat, etapy Drogi, pocałunek pokoju…) z wyszukiwaniem i grupami']],
+  ['14.8', ['Modlitwa ślepca: wibracje działają także w trybie cichym / Nie przeszkadzać i przy wygaszonym ekranie (jak budzik, ale bez dźwięku)']],
+  ['14.7', ['Kafelek „Modlitwa ślepca” (Jezu, Synu Dawida, zmiłuj się nade mną) – timer 5 / 10 / 15 min albo z ręki; na koniec dyskretne wibracje bez dzwonka, ekran nie gaśnie', 'Postanowienia: kilka naraz („＋ Następne”), każde zaliczane osobno']],
   ['14.6', ['📖 przy czytaniach mszalnych (np. „Księga Przysłów 31,10-13.19-20.30-31”, „Ewangelia wg św. Mateusza 25,14-30”) otwiera właściwy fragment w Biblii i zaznacza wszystkie wersety']],
   ['14.5', ['Kapłani: osobna sekcja we Wspólnocie z telefonem (✆ / ✉), kapłan może być przy kilku wspólnotach albo gościnnie (np. Pascha)', 'Kapłan jako użytkownik („Kim jesteś”) nie widzi listy wspólnoty ani Kasetki', 'Kapłani do wyboru przy blokach rozpisek']],
   ['14.4', ['Ekipa dużego tematu: od początku przygotowania do konwiwencji jej bracia są w grupach wyszarzeni (📜) i nie dochodzą do obecnych przy zaznaczaniu całej grupy; plakietka „duży temat” na liście']],
@@ -799,6 +809,8 @@ function showNewsOnce() {
 
 /* Ikony kafelków – rysowane kreską, z filtrem „szkicu” (definicja w index.html). */
 const ICONS = {
+  abc: '<rect class="f" x="8" y="7" width="32" height="34" rx="4"/><path d="M14 32l5-14 5 14M15.5 28h7M28 18h5a3 3 0 0 1 0 6h-5zM28 24h6a4 4 0 0 1 0 8h-6z"/>',
+  slepiec: '<path class="f" d="M24 8c-3 6-9 10-9 18a9 9 0 0 0 18 0c0-8-6-12-9-18z"/><path d="M24 27v9M14 40h20"/>',
   hz: '<path class="f" d="M24 6l16 8v20l-16 8-16-8V14z"/><path d="M24 14v20M17 21h14"/>',
   harm: '<rect class="f" x="7" y="10" width="34" height="30" rx="4"/><path d="M7 18h34M15 6v8M33 6v8"/><path d="M14 25h6M14 32h6M26 25h8M26 32h8" class="fl"/>',
   oglosz: '<path class="f" d="M8 20l22-9v26L8 28z"/><path d="M30 11l8-3v32l-8-3M8 20v8M13 30l3 9h5l-2-8"/>',
@@ -886,6 +898,8 @@ function icon(k) { return '<svg viewBox="0 0 48 48" class="sk"><g filter="url(#s
 const TILES = [
   ['przyg', 'Przygotowania', 'nowe: Liturgia, Eucharystia, rozpiski'],
   ['moje', 'Moje przygotowania', 'w czym biorę udział'],
+  ['abc', 'Neo ABC', 'słowniczek: monicja, echo, kerygmat…'],
+  ['slepiec', 'Modlitwa ślepca', 'Jezu, Synu Dawida… – z timerem'],
   ['harm', 'Harmonogramy', 'kolejność grup, statystyki'],
   ['oglosz', 'Ogłoszenia', 'checklista na Eucharystię'],
   ['skrutacja', 'Skrutacja', 'moje zapiski ze Słowem'],
@@ -906,7 +920,7 @@ const TILES = [
   ['archiwum', 'Archiwum', 'przygotowania'],
 ];
 
-const TILE_SHORT = { harm: 'Harmonogram', oglosz: 'Ogłoszenia', biblia: 'Biblia', kkk: 'Katechizm', przyg: 'Przygotowania', moje: 'Moje', temat: 'Temat', slowo: 'Słowo', eucharystia: 'Eucharystia', skrutacja: 'Skrutacja', slownik: 'Słownik', spiewnik: 'Śpiewnik', kalendarz: 'Kalendarz',
+const TILE_SHORT = { abc: 'Neo ABC', slepiec: 'Modlitwa', harm: 'Harmonogram', oglosz: 'Ogłoszenia', biblia: 'Biblia', kkk: 'Katechizm', przyg: 'Przygotowania', moje: 'Moje', temat: 'Temat', slowo: 'Słowo', eucharystia: 'Eucharystia', skrutacja: 'Skrutacja', slownik: 'Słownik', spiewnik: 'Śpiewnik', kalendarz: 'Kalendarz',
   katechezy: 'Katechezy', zdjecia: 'Zdjęcia', wiadomosc: 'Wiadomość', katechisci: 'Katechiści', linki: 'Linki', notatnik: 'Notatnik', wydatki: 'Kasetka', oapp: 'O aplikacji', wspolnota: 'Wspólnota', archiwum: 'Archiwum' };
 const TILE_ACT = { wiadomosc: 'msg-open', katechisci: 'kc-open', linki: 'lnk-open' };
 /** Linki: stałe + własne skróty (S.myLinks = [[nazwa, url]]). */
@@ -1103,7 +1117,66 @@ function kaplDialog(id) {
     (k ? '<button class="btn text" data-act="kapl-del">Usuń</button>' : '') + '<button class="btn" data-act="kapl-ok">Zapisz</button>');
 }
 
-/* ===== RAPORT (PDF w klimacie aplikacji) ===== */
+/* ===== MODLITWA ŚLEPCA (Mk 10,47) – timer, na koniec dyskretne wibracje ===== */
+let prayIv = null;
+function viewSlepiec() {
+  const P = UI.pray, left = P ? Math.max(0, P.end - Date.now()) : 0;
+  const fmt = ms => { const t = Math.ceil(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+  setTimeout(prayTick, 0);
+  return '<div class="card pray"><div class="prayt">Jezu, Synu Dawida,<br>zmiłuj się nade mną!</div><div class="muted center">Mk 10,47 – wołanie niewidomego Bartymeusza</div>' +
+    (P ? '<div class="praytime" id="prayT">' + (left ? fmt(left) : 'Amen ✓') + '</div>' +
+      '<button class="btn ghost full" data-act="pray-stop">' + (left ? 'Zakończ wcześniej' : 'Gotowe') + '</button>'
+      : '<div class="muted center mt">Ile czasu? Na koniec telefon delikatnie zawibruje – bez dzwonka.</div><div class="praybtn">' + [5, 10, 15].map(n => '<button class="btn" data-act="pray-go" data-a="' + n + '">' + n + ' min</button>').join('') +
+        '<button class="btn ghost" data-act="pray-go" data-a="">z ręki</button></div>') + '</div>';
+}
+function prayTick() {
+  clearInterval(prayIv); if (!UI.pray || UI.pray.done) return;
+  const fmt = ms => { const t = Math.ceil(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+  prayIv = setInterval(() => {
+    const el = document.getElementById('prayT'), left = UI.pray ? UI.pray.end - Date.now() : 0;
+    if (!UI.pray || UI.view !== 'slepiec') { if (!UI.pray) clearInterval(prayIv); }
+    if (left <= 0 && UI.pray && !UI.pray.done) {
+      UI.pray.done = true; clearInterval(prayIv);
+      if (A && A.prayBuzz) A.prayBuzz();
+      else if (navigator.vibrate) try { navigator.vibrate([450, 300, 450, 300, 450]); } catch (e) { /* */ }
+      if (UI.view === 'slepiec') render();
+      return;
+    }
+    if (el) el.textContent = fmt(left);
+  }, 500);
+}
+function prayStart(min) {
+  if (!(min > 0)) return;
+  UI.pray = { end: Date.now() + min * 60000 };
+  if (A && A.prayTimer) A.prayTimer(min * 60000);
+  render();
+}
+
+/* ===== REGION – osoby z regionu pełniące funkcje (telefon, adres) ===== */
+function regL() { return S.region = S.region || []; }
+function regionCard() {
+  const L = regL();
+  return '<div class="card kapl"><h2>Region</h2>' + (L.length ? L.map(r => {
+    const tel = (r.tel || '').replace(/\s/g, '');
+    return '<div class="person-row"><div class="grow" data-act="reg-edit" data-a="' + r.id + '"><div class="pn">' + esc(r.n) + (r.f ? ' <span class="tag">' + esc(r.f) + '</span>' : '') + '</div>' +
+      '<div class="muted">' + [r.tel, r.adres, r.mail].filter(Boolean).map(esc).join(' · ') + '</div></div><div class="pacts">' +
+      (tel ? '<button class="icon" data-act="link" data-a="tel:' + esc(tel) + '" title="Zadzwoń">✆</button><button class="icon" data-act="link" data-a="sms:' + esc(tel) + '" title="SMS">✉</button>' : '') +
+      (r.adres ? '<button class="icon" data-act="link" data-a="geo:0,0?q=' + encodeURIComponent(r.adres) + '" title="Mapa">⌖</button>' : '') + '</div></div>';
+  }).join('') : '<div class="muted">Osoby z regionu, które warto znać – katechiści regionu, odpowiedzialni, prezbiterzy…</div>') +
+    '<button class="btn ghost full mt" data-act="reg-edit" data-a="">＋ Dodaj osobę z regionu</button></div>';
+}
+function regDialog(id) {
+  const r = id ? regL().find(x => x.id === id) : {};
+  modalState = { kind: 'reg', id: id };
+  openModal(id ? 'Region' : 'Nowa osoba z regionu', '<label class="lbl">Imię i nazwisko</label><input type="text" id="rgN" value="' + esc(r.n || '') + '">' +
+    '<label class="lbl">Funkcja</label><input type="text" id="rgF" placeholder="np. katechista regionu, odpowiedzialny regionu" value="' + esc(r.f || '') + '">' +
+    '<label class="lbl">Telefon</label><input type="tel" id="rgT" value="' + esc(r.tel || '') + '">' +
+    '<label class="lbl">Adres</label><input type="text" id="rgA" value="' + esc(r.adres || '') + '">' +
+    '<label class="lbl">E-mail</label><input type="email" id="rgM" value="' + esc(r.mail || '') + '">' +
+    '<label class="lbl">Notatka</label><textarea id="rgU" rows="2">' + esc(r.u || '') + '</textarea>',
+    (id ? '<button class="btn text" data-act="reg-del">Usuń</button>' : '') + '<button class="btn" data-act="reg-ok">Zapisz</button>');
+}
+
 const REP_PARTS = [['lista', 'Lista wspólnoty (z numerami)'], ['wyd', 'Najbliższe wydarzenia'], ['harm', 'Harmonogram Liturgii Słowa i Eucharystii'], ['tematy', 'Tematy: nieprzerobione i przerobione'], ['stat', 'Statystyki']];
 function reportDialog() {
   const r = S.raport = S.raport || { lista: 1, wyd: 1, harm: 1, tematy: 1, stat: 1, dni: 30 };
@@ -1239,6 +1312,22 @@ function lentCard() {
   }
   return '<div class="pascha lent" data-act="kal-goto" data-a="' + isoD(t < ash ? ash : t) + '"><span class="pz">✠</span><div class="grow">' + lbl + '<div class="muted">' + sub + '</div></div></div>';
 }
+/** Tydzień Adwentu (1–4) dziś albo 0. */
+function adventWeek() { const t = day0(), y = t.getFullYear(), adv = adventStart(y); return t >= adv && t < new Date(y, 11, 25) ? Math.min(4, Math.floor(dDiff(t, adv) / 7) + 1) : 0; }
+/** Wieniec adwentowy: zapalone świece wg tygodnia, wcześniej zapalone – krótsze (wypalone). III – różowa (Gaudete). */
+function adventWreath(w) {
+  if (!w) return '';
+  const col = ['#6B3A8C', '#6B3A8C', '#D97BA6', '#6B3A8C'];
+  let g = '';
+  for (let i = 0; i < 4; i++) {
+    const lit = i < w, hgt = lit ? 44 - (w - 1 - i) * 9 : 44, x = 14 + i * 30, top = 70 - hgt;
+    g += '<rect x="' + x + '" y="' + top + '" width="14" height="' + hgt + '" rx="3" fill="' + col[i] + '"' + (lit ? '' : ' opacity=".55"') + '/>' +
+      '<line x1="' + (x + 7) + '" y1="' + top + '" x2="' + (x + 7) + '" y2="' + (top - 4) + '" stroke="#333" stroke-width="1.5"/>' +
+      (lit ? '<ellipse class="flame" cx="' + (x + 7) + '" cy="' + (top - 10) + '" rx="4.5" ry="8" fill="#FFC23A"/><ellipse cx="' + (x + 7) + '" cy="' + (top - 8) + '" rx="2" ry="4" fill="#FFF3C4"/>' : '');
+  }
+  return '<svg class="wreath" viewBox="0 0 136 84" aria-label="Wieniec adwentowy – tydzień ' + w + '">' + g +
+    '<path d="M4 74 Q68 60 132 74 Q68 88 4 74z" fill="#2E6B3A"/><circle cx="20" cy="74" r="3" fill="#B22"/><circle cx="68" cy="69" r="3" fill="#B22"/><circle cx="114" cy="74" r="3" fill="#B22"/></svg>';
+}
 function adventCard() {
   const t = day0(), y = t.getFullYear(), ep = new Date(y, 0, 6);
   if (t <= ep || t >= new Date(y, 11, 25)) {
@@ -1248,22 +1337,28 @@ function adventCard() {
   const xm = new Date(y, 11, 25), adv = adventStart(y), dx = dDiff(xm, t);
   const lbl = t >= adv ? 'Adwent – tydzień <b>' + (Math.floor(dDiff(t, adv) / 7) + 1) + '</b> · do Bożego Narodzenia: <b>' + dx + '</b> ' + (dx === 1 ? 'dzień' : 'dni')
     : 'Do Adwentu: <b>' + dDiff(adv, t) + '</b> dni';
-  return '<div class="pascha adw" data-act="kal-goto" data-a="' + isoD(t >= adv ? xm : adv) + '"><span class="pz">★</span><div class="grow">' + lbl +
+  return '<div class="pascha adw" data-act="kal-goto" data-a="' + isoD(t >= adv ? xm : adv) + '">' + (t >= adv ? adventWreath(adventWeek()) : '<span class="pz">★</span>') + '<div class="grow">' + lbl +
     '<div class="muted">' + (t >= adv ? 'Boże Narodzenie – ' + DOWL_A[xm.getDay()] + ', ' + plDate(isoD(xm)) : 'I niedziela Adwentu – ' + plDate(isoD(adv)) + ' · do Bożego Narodzenia ' + dx + ' dni') + '</div></div></div>';
 }
-function postan() { const p = S.postan = S.postan || {}; if (!p.log) p.log = {}; return p; }
+/** Postanowienia (kilka naraz, każde zaliczane osobno). S.postany = [{id, t, od, log:{data:true/false}}]; S.postanAsk – pytać następnego dnia. */
+function postany() {
+  if (!S.postany) { S.postany = []; if (S.postan && S.postan.t) S.postany.push({ id: uuid(), t: S.postan.t, od: S.postan.od, log: S.postan.log || {} }); if (S.postan && S.postan.ask === false) S.postanAsk = false; delete S.postan; }
+  return S.postany;
+}
+function postan() { return { ask: S.postanAsk !== false }; }
 function postanCard() {
-  const p = postan();
-  if (!p.t) return '<div class="pokuta"><span class="grow muted">Moje postanowienie – np. na Adwent albo Wielki Post</span><button class="btn text sm" data-act="postan-set">Dodaj</button></div>';
-  const t = day0(), yd = isoD(addDays(t, -1)), log = p.log;
-  const ok = Object.keys(log).filter(d => log[d]).length, all = Object.keys(log).length;
-  let ser = 0; for (let d = addDays(t, log[isoD(t)] !== undefined ? 0 : -1); log[isoD(d)]; d = addDays(d, -1)) ser++;
-  const ask = p.ask !== false && yd >= (p.od || '') && log[yd] === undefined;
-  return '<div class="card postan"><div class="row"><div class="grow"><span class="muted">Postanowienie:</span> <b>' + esc(p.t) + '</b></div><button class="icon" data-act="postan-set" title="Zmień">✎</button></div>' +
-    (ask ? '<div class="row mt"><span class="grow">Czy wczoraj udało się wytrwać?</span><button class="btn sm" data-act="postan-log" data-a="' + yd + '" data-b="1">Tak 🙂</button><button class="btn ghost sm" data-act="postan-log" data-a="' + yd + '" data-b="0">Nie</button></div>' : '') +
-    '<div class="row mt"><span class="grow muted">' + (all ? 'Wytrwałem/am: ' + ok + ' z ' + all + ' dni' + (ser > 1 ? ' · seria: ' + ser + ' 🔥' : '') : 'od ' + plDate(p.od)) + '</span>' +
-    (log[isoD(t)] === undefined ? '<button class="btn text sm" data-act="postan-log" data-a="' + isoD(t) + '" data-b="1">Dziś ✓</button>' : '') +
-    '<button class="btn text sm" data-act="postan-end">Zakończ</button></div></div>';
+  const L = postany(), t = day0(), td = isoD(t), yd = isoD(addDays(t, -1)), ask = S.postanAsk !== false;
+  if (!L.length) return '<div class="pokuta"><span class="grow muted">Moje postanowienie – np. na Adwent albo Wielki Post</span><button class="btn text sm" data-act="postan-set" data-a="">Dodaj</button></div>';
+  return '<div class="card postan"><h2><span class="grow">Moje postanowienia</span><button class="btn text sm" data-act="postan-set" data-a="">＋ Następne</button></h2>' + L.map(p => {
+    const log = p.log || {}, ok = Object.keys(log).filter(d => log[d]).length, all = Object.keys(log).length;
+    let ser = 0; for (let d = addDays(t, log[td] !== undefined ? 0 : -1); log[isoD(d)]; d = addDays(d, -1)) ser++;
+    const q = ask && yd >= (p.od || '') && log[yd] === undefined;
+    return '<div class="pst"><div class="row"><b class="grow">' + esc(p.t) + '</b><button class="icon" data-act="postan-set" data-a="' + p.id + '" title="Zmień">✎</button></div>' +
+      (q ? '<div class="row mt"><span class="grow">Czy wczoraj udało się wytrwać?</span><button class="btn sm" data-act="postan-log" data-a="' + p.id + '" data-b="' + yd + '|1">Tak 🙂</button><button class="btn ghost sm" data-act="postan-log" data-a="' + p.id + '" data-b="' + yd + '|0">Nie</button></div>' : '') +
+      '<div class="row"><span class="grow muted">' + (all ? 'Wytrwałem/am: ' + ok + ' z ' + all + ' dni' + (ser > 1 ? ' · seria: ' + ser + ' 🔥' : '') : 'od ' + plDate(p.od)) + '</span>' +
+      (log[td] === undefined ? '<button class="btn text sm" data-act="postan-log" data-a="' + p.id + '" data-b="' + td + '|1">Dziś ✓</button>' : '<span class="muted">dziś ' + (log[td] ? '✓' : '✗') + '</span>') +
+      '<button class="btn text sm" data-act="postan-end" data-a="' + p.id + '">Zakończ</button></div></div>';
+  }).join('') + '</div>';
 }
 
 /* ===== TEMAT ===== */
@@ -1836,7 +1931,7 @@ function viewWspolnota() {
           const tel = S.telefony[b] || '', ice = (S.ice || {})[b], mail = (S.maile || {})[b];
           return '<div class="person-row fullnames' + (isAkt(b) ? '' : ' inact') + '"><div class="grow" data-act="osoba-edit" data-a="' + esc(b) + '">' +
             '<div class="pn">' + dot(b) + esc(b) + (b === S.owner ? ' <span class="muted">(Ja)</span>' : '') + roleBadges(b, true) + '</div>' +
-            '<div class="pmeta">' + (window.HZ && HZ.busy(b) ? '<span class="tag hz">📜 duży temat: ' + esc(HZ.busy(b)) + '</span> ' : '') + (!isAkt(b) ? '<span class="tag' + ((S.zmarli || {})[b] ? ' dead' : (S.nieakt || {})[b] === 'misja' ? ' mis' : '') + '">' + stLbl(b) + '</span> ' : '') + '<span class="muted">' + (tel || mail ? esc([tel, mail].filter(Boolean).join(' · ')) : 'brak numeru') + '</span></div></div>' +
+            '<div class="pmeta">' + ((S.katech || {})[b] ? '<span class="tag kat" title="Katechista">K</span> ' : '') + (window.HZ && HZ.busy(b) ? '<span class="tag hz">📜 duży temat: ' + esc(HZ.busy(b)) + '</span> ' : '') + (!isAkt(b) ? '<span class="tag' + ((S.zmarli || {})[b] ? ' dead' : (S.nieakt || {})[b] === 'misja' ? ' mis' : '') + '">' + stLbl(b) + '</span> ' : '') + '<span class="muted">' + (tel || mail ? esc([tel, mail].filter(Boolean).join(' · ')) : 'brak numeru') + '</span></div></div>' +
             '<div class="pacts">' + (tel ? '<button class="icon" data-act="call" data-a="' + esc(b) + '" title="Zadzwoń">✆</button>' +
               '<button class="icon" data-act="sms" data-a="' + esc(b) + '" title="SMS">✉</button>' +
               '<button class="icon wa" data-act="wa" data-a="' + esc(b) + '" title="WhatsApp">W</button>' : '') +
@@ -1853,7 +1948,7 @@ function viewWspolnota() {
     '<button class="btn full mt" data-act="brat-add">+ Dodaj</button>' +
     '<button class="btn text full mt" data-act="wsp-import">📋 Wklej listę osób z arkusza (imię, telefon, grupa)</button></div>' +
     (window.KAL ? KAL.groupsCard() : '') + communityCard();
-  h += kaplCard();
+  h += kaplCard() + regionCard();
   const dead = S.bracia.filter(isDead);
   if (dead.length) h += '<div class="card dead"><h2>† Odeszli do Pana (' + dead.length + ')</h2>' + dead.map(b => '<div class="person-row" data-act="osoba-edit" data-a="' + esc(b) + '"><div class="grow"><div class="pn">† ' + esc(b) + '</div><div class="muted">' +
     ((S.urodz || {})[b] && +(S.urodz[b].slice(0, 4)) > 1900 ? plDate(S.urodz[b]) + ' – ' : 'zm. ') + plDate(S.zmarli[b]) + '</div></div></div>').join('') + '<div class="muted mt">Wieczny odpoczynek racz im dać, Panie.</div></div>';
@@ -3556,7 +3651,7 @@ const PACK = [
 ];
 function packOf(st, sel) {
   const p = { trojnogPack: 1, ver: A && A.version ? A.version() : '', od: st.owner || '', t: Date.now(), parts: {} };
-  if (sel.wsp) p.parts.wsp = { wspolnoty: st.wspolnoty, maile: st.maile || {}, nieakt: st.nieakt || {}, urodz: st.urodz || {}, zmarli: st.zmarli || {}, wspolnota: st.wspolnota };
+  if (sel.wsp) p.parts.wsp = { wspolnoty: st.wspolnoty, maile: st.maile || {}, nieakt: st.nieakt || {}, urodz: st.urodz || {}, zmarli: st.zmarli || {}, katech: st.katech || {}, wspolnota: st.wspolnota };
   if (sel.kal) p.parts.kal = { kal: st.kal || [], grupyRob: st.grupyRob || [] };
   if (sel.rz) p.parts.rz = { rozpiski: st.rozpiski || {} };
   if (sel.hist) p.parts.hist = { history: st.history || [], done: st.done || {} };
@@ -3604,7 +3699,7 @@ function applyPack(p, sel) {
       (w.katechisci || []).forEach(k => { if (!(loc.katechisci = loc.katechisci || []).some(x => x.imie === k.imie)) loc.katechisci.push(k); });
       ['etap', 'region'].forEach(k => { if (!loc[k] && w[k]) loc[k] = w[k]; });
     });
-    S.maile = Object.assign({}, P.wsp.maile || {}, S.maile || {}); S.nieakt = Object.assign({}, P.wsp.nieakt || {}, S.nieakt || {}); S.urodz = Object.assign({}, P.wsp.urodz || {}, S.urodz || {}); S.zmarli = Object.assign({}, P.wsp.zmarli || {}, S.zmarli || {});
+    S.maile = Object.assign({}, P.wsp.maile || {}, S.maile || {}); S.nieakt = Object.assign({}, P.wsp.nieakt || {}, S.nieakt || {}); S.urodz = Object.assign({}, P.wsp.urodz || {}, S.urodz || {}); S.zmarli = Object.assign({}, P.wsp.zmarli || {}, S.zmarli || {}); S.katech = Object.assign({}, P.wsp.katech || {}, S.katech || {});
     if (S.wspolnoty.length && !S.wspolnoty.some(w => w.id === S.wspAktywna)) S.wspAktywna = S.wspolnoty[0].id;
   }
   if (sel.kal && P.kal) {
@@ -3672,6 +3767,7 @@ document.addEventListener('click', ev => {
   if (window.KAT && KAT.act(act, a, el)) return;
   if (window.BIB && BIB.act(act, a, el)) return;
   if (window.HZ && HZ.act(act, a, el)) return;
+  if (window.ABC && ABC.act(act, a, el)) return;
   if (window.WYG && WYG.act(act, a, el)) return;
   if (window.KASA && KASA.act(act, a, el)) return;
   if (['draw-topic', 'eu-draw', 'shuffle-order'].indexOf(act) >= 0) {
@@ -3842,6 +3938,13 @@ document.addEventListener('click', ev => {
     case 'font': S.fontScale = +a; save(true); break;
     case 'tiles-cols': S.tilesMin = a !== '0'; if (S.tilesMin) S.tilesCols = +a; save(true); break;
     case 'nav-back': window.onBack(); return;
+    case 'reg-edit': if (isPriestMe()) return; regDialog(a); return;
+    case 'reg-ok': { const v = id => document.getElementById(id).value.trim(), n = v('rgN'); if (!n) { toast('Wpisz imię i nazwisko.'); return; }
+      let r = modalState.id && regL().find(x => x.id === modalState.id); if (!r) { r = { id: uuid() }; regL().push(r); }
+      Object.assign(r, { n: n, f: v('rgF'), tel: v('rgT'), adres: v('rgA'), mail: v('rgM'), u: v('rgU') }); closeModal(); save(); render(); return; }
+    case 'reg-del': { const id = modalState.id; confirmBox('Usunąć?', '', 'Usuń', () => { S.region = regL().filter(x => x.id !== id); save(); render(); }); return; }
+    case 'pray-go': if (a) prayStart(+a); else promptBox('Ile minut?', 'Minuty', '20', v => prayStart(parseFloat(String(v).replace(',', '.')))); return;
+    case 'pray-stop': if (UI.pray && !UI.pray.done && A && A.prayTimer) A.prayTimer(0); UI.pray = null; clearInterval(prayIv); render(); return;
     case 'kapl-edit': if (isPriestMe()) return; modalState = null; kaplDialog(a); return;
     case 'kapl-w': { const m = modalState; m.n = document.getElementById('kpN').value; m.t = document.getElementById('kpT').value; m.g = document.getElementById('kpG').value;
       const i = m.wsp.indexOf(a); if (i >= 0) m.wsp.splice(i, 1); else m.wsp.push(a); kaplDialog(m.id); return; }
@@ -3889,9 +3992,17 @@ document.addEventListener('click', ev => {
       if (i < 0 || j < 0 || j >= o.length) return;
       o.splice(j, 0, o.splice(i, 1)[0]); S.startOrder = o; save(true); break;
     }
-    case 'postan-set': { const p = postan(); promptBox('Moje postanowienie', 'Co postanawiam (np. różaniec codziennie, bez słodyczy)', p.t || '', v => { v = String(v || '').trim(); if (!v) return; if (v !== p.t) { if (p.t) p.log = {}; p.t = v; p.od = isoD(day0()); } save(); render(); }); return; }
-    case 'postan-log': { const p = postan(); p.log[a] = el.dataset.b === '1'; save(); if (p.log[a]) toast('Chwała Bogu! 🙂'); break; }
-    case 'postan-end': confirmBox('Zakończyć postanowienie?', 'Licznik dni zostanie wyczyszczony.', 'Zakończ', () => { const p = postan(); S.postanHist = (S.postanHist || []).concat([{ t: p.t, od: p.od, do: isoD(day0()), log: p.log }]).slice(-20); S.postan = { ask: p.ask }; save(); render(); }); return;
+    case 'postan-set': {
+      const L = postany(), p = a ? L.find(x => x.id === a) : null;
+      promptBox(p ? 'Moje postanowienie' : 'Nowe postanowienie', 'Co postanawiam (np. różaniec codziennie, bez słodyczy)', p ? p.t : '', v => {
+        v = String(v || '').trim(); if (!v) return;
+        if (p) p.t = v; else L.push({ id: uuid(), t: v, od: isoD(day0()), log: {} });
+        save(); render(); });
+      return;
+    }
+    case 'postan-log': { const p = postany().find(x => x.id === a); if (!p) return; const d = el.dataset.b.split('|'); p.log = p.log || {}; p.log[d[0]] = d[1] === '1'; save(); if (d[1] === '1') toast('Chwała Bogu! 🙂'); break; }
+    case 'postan-end': confirmBox('Zakończyć to postanowienie?', 'Zniknie z listy (licznik trafi do historii).', 'Zakończ', () => { const L = postany(), p = L.find(x => x.id === a); if (!p) return;
+      S.postanHist = (S.postanHist || []).concat([{ t: p.t, od: p.od, do: isoD(day0()), log: p.log }]).slice(-30); S.postany = L.filter(x => x.id !== a); save(); render(); }); return;
     case 'tile-mv': {
       const o = tilesOrdered().map(t => t[0]), i = o.indexOf(a), j = i + (+el.dataset.b);
       if (i < 0 || j < 0 || j >= o.length) return;
@@ -4230,6 +4341,7 @@ document.addEventListener('click', ev => {
           (roleLocked() ? '<div class="muted">Role ustawia odpowiedzialny (lista pobierana z arkusza).</div>' : '') +
         '<div class="row"><div class="grow"><label class="lbl">Urodziny</label><input type="date" id="osUr" value="' + esc(((S.urodz || {})[a] || '').replace(/^--/, '2000-')) + '"></div>' +
         '<div class="grow"><label class="lbl">† Data śmierci</label><input type="date" id="osSm" value="' + esc((S.zmarli || {})[a] || '') + '"></div></div>' +
+        '<label class="row mt"><input type="checkbox" id="osKat"' + ((S.katech || {})[a] ? ' checked' : '') + '><span class="grow"><b>K</b> – katechista</span></label>' +
         '<label class="lbl">Status</label><select id="osStatus"><option value="">uczestniczy</option><option value="1"' + (S.nieakt && S.nieakt[a] && S.nieakt[a] !== 'misja' ? ' selected' : '') + '>nie uczestniczy obecnie</option><option value="misja"' + (S.nieakt && S.nieakt[a] === 'misja' ? ' selected' : '') + '>🌍 na misji</option></select>' +
         '<div class="muted">Gdy nie uczestniczy, jest na misji albo odszedł do Pana (†) – nie ma go wśród obecnych, w losowaniu ani przy rozpiskach. Zostaje na liście, a urodziny i rocznica śmierci pokazują się w kalendarzu.</div>',
         '<button class="btn text" data-act="brat-del" data-a="' + esc(a) + '">Usuń</button><button class="btn" data-act="osoba-ok">Zapisz</button>');
@@ -4238,7 +4350,7 @@ document.addEventListener('click', ev => {
       const old = modalState.old, v = document.getElementById('osName').value.trim(), t = document.getElementById('osTel').value.trim();
       const roles = roleLocked() ? rolesOf(modalState.old) : Array.from(document.querySelectorAll('#osRole .chip.on')).map(x => x.dataset.a);
       const colEl = document.querySelector('#osCol .chip.on'), col = colEl && colEl.dataset.a !== '' ? +colEl.dataset.a : null;
-      const nieakt = document.getElementById('osStatus').value, ur = document.getElementById('osUr').value, sm = document.getElementById('osSm').value, mail = document.getElementById('osMail').value.trim(), malz = document.getElementById('osMalz').value;
+      const kat = document.getElementById('osKat').checked, nieakt = document.getElementById('osStatus').value, ur = document.getElementById('osUr').value, sm = document.getElementById('osSm').value, mail = document.getElementById('osMail').value.trim(), malz = document.getElementById('osMalz').value;
       const iceN = document.getElementById('osIceN').value.trim(), iceT = document.getElementById('osIceT').value.trim();
       closeModal();
       if (!v) return;
@@ -4248,6 +4360,7 @@ document.addEventListener('click', ev => {
       if (nieakt) { S.nieakt[v] = nieakt === 'misja' ? 'misja' : true; S.obecni = S.obecni.filter(x => x !== v); if (S.eucharystia) S.eucharystia.obecni = S.eucharystia.obecni.filter(x => x !== v); }
       else delete S.nieakt[v];
       S.maile = S.maile || {}; if (mail) S.maile[v] = mail; else delete S.maile[v];
+      S.katech = S.katech || {}; if (kat) S.katech[v] = 1; else delete S.katech[v];
       S.urodz = S.urodz || {}; if (ur) S.urodz[v] = ur; else delete S.urodz[v];
       S.zmarli = S.zmarli || {}; if (sm) { S.zmarli[v] = sm; S.obecni = S.obecni.filter(x => x !== v); } else delete S.zmarli[v];
       S.ice = S.ice || {}; delete S.ice[old]; if (iceT || iceN) S.ice[v] = { n: iceN, tel: iceT };
@@ -4403,7 +4516,7 @@ document.addEventListener('change', ev => {
     case 'pok-show': S.pokShow = el.checked; save(true); break;
     case 'rep-p': S.raport[el.dataset.a] = el.checked ? 1 : 0; save(true); break;
     case 'start-vis': { const h = startHide(); if (el.checked) delete h[el.dataset.a]; else h[el.dataset.a] = 1; save(true); break; }
-    case 'postan-ask': postan().ask = el.checked; save(true); break;
+    case 'postan-ask': S.postanAsk = el.checked; save(true); break;
     case 'tile-vis': S.hiddenTiles = S.hiddenTiles || {}; if (el.checked) delete S.hiddenTiles[el.dataset.a]; else S.hiddenTiles[el.dataset.a] = 1; save(); break;
     default: return;
   }
@@ -4432,6 +4545,7 @@ document.addEventListener('input', ev => {
   if (k === 'page') { c.pages[+el.dataset.a] = el.value; save(); }
   if (k === 'note') { const n = UI.noteEd ? notes().find(x => x.id === UI.noteEd) : (UI.note = UI.note || { tytul: '', tekst: '', data: today() }); if (n) { n[el.dataset.a] = el.value; if (UI.noteEd) { n.ts = Date.now(); save(true); } } }
   if (k === 'eu-data') { S.eucharystia.data = el.value; save(); render(); }
+  if (k === 'abc' && window.ABC) { ABC.input(el); return; }
   if (k === 'hz' && window.HZ) { HZ.input(el); if (el.tagName === 'TEXTAREA') autoGrow(el); return; }
   if (k === 'skr-node' && window.BIB) { BIB.nodeInput(el); if (el.tagName === 'TEXTAREA') autoGrow(el); return; }
   if (k === 'skr') { const x = S.skrutacje.find(y => y.id === UI.skr); if (x) { x[el.dataset.a] = el.value; x.ts = Date.now(); save(); } if (el.tagName === 'TEXTAREA') autoGrow(el); }

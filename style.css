@@ -870,3 +870,20 @@ html.desk .bibbar { left: 260px; bottom: 18px; }
 .pinact-bar { display: block; width: 100%; margin: 10px 0 4px; padding: 9px 12px; border: 1px dashed var(--line); border-radius: 10px; background: rgba(128,128,128,.08); text-align: left; font-weight: 600; color: inherit; cursor: pointer; }
 .hzbusy { opacity: .45; }
 .tag.hz { background: rgba(122, 30, 30, .12); color: var(--accent, #7A1E1E); }
+.postan .pst { padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.postan .pst:last-child { border-bottom: 0; }
+.pray .prayt { font-size: 26px; line-height: 1.4; text-align: center; font-family: var(--serif, Georgia, serif); margin: 18px 0 8px; color: var(--gold, #C9A227); }
+.praytime { font-size: 54px; text-align: center; font-variant-numeric: tabular-nums; margin: 22px 0; letter-spacing: 2px; }
+.praybtn { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 14px; }
+.praybtn .btn { min-width: 84px; }
+.abci { padding: 9px 0; border-bottom: 1px dashed var(--line); line-height: 1.45; }
+.abci b { color: var(--gold, #C9A227); font-size: 16px; }
+.tag.kat { background: #7A1E1E; color: #fff; font-weight: 700; }
+.kzap { margin: 4px 0 8px; padding: 8px 10px; border: 1px dashed var(--line); border-radius: 10px; }
+.kzap.hidden { display: none; }
+.gdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.wreath { width: 74px; height: 46px; flex: 0 0 auto; margin-right: 10px; }
+.wreath .flame { animation: flk 1.6s ease-in-out infinite alternate; transform-origin: center bottom; transform-box: fill-box; }
+@keyframes flk { from { transform: scale(1, 1); } to { transform: scale(.85, 1.08); } }
+.advbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; margin-bottom: 10px; border-radius: 14px; background: rgba(107, 58, 140, .14); border: 1px solid rgba(107, 58, 140, .4); }
+.advbar .wreath { width: 92px; height: 57px; }

@@ -179,8 +179,9 @@
     ['p-ls', 'Przygotowanie Liturgii Słowa', '#2E6DA4', 'p'], ['p-eu', 'Przygotowanie Eucharystii', '#B3261E', 'p'], ['p-lp', 'Przygotowanie Liturgii pokutnej', '#6B3A8C', 'p'],
     ['p-kon', 'Przygotowanie Konwiwencji', '#B7791F', 'p'], ['p-og', 'Przygotowanie ogólne', '#3F7A3A', 'p'],
     ['brak-eu', 'Brak Eucharystii', '#8A8178', 'c'], ['pascha', 'Pascha', '#C9A227', 'c'], ['kpr', 'Konwiwencja początku roku', '#B7791F', 'c'],
-    ['gk', 'Głoszenie katechez', '#00796B', 'k'], ['kat', 'Katecheza', '#00897B', 'k'], ['skat', 'Spotkanie z katechistami', '#5D4037', 'k'],
-    ['inne', 'Własne wydarzenie', '#455A64', 'o'],
+    ['gk', 'Głoszenie katechez', '#00796B', 'k'], ['kat', 'Katecheza', '#00897B', 'k'], ['skat', 'Spotkanie z katechistami', '#5D4037', 'k'], ['skk', 'Spotkanie katechistów', '#7A1E1E', 'k'],
+    ['ogp', 'Ogłoszenie Paschy', '#C9A227', 'k'], ['oga', 'Ogłoszenie Adwentu', '#6B3A8C', 'k'],
+    ['piel', 'Pielgrzymka', '#1E6B8A', 'o'], ['skrt', 'Skrutacja', '#8D6E63', 'o'], ['inne', 'Własne wydarzenie', '#455A64', 'o'],
   ];
   /** Nazwa wydarzenia – przy „Własnym” wpisany tytuł. */
   function nm(e) { return e && e.typ === 'inne' && e.tytul ? e.tytul : (TY[e && e.typ] || TY['p-og']).n; }
@@ -227,13 +228,15 @@
     }
     return '';
   }
-  const SHORT = { inne: 'W', eu: 'Euch', ls: 'LS', lp: 'Pok', kon: 'Konw', 'p-ls': 'P·LS', 'p-eu': 'P·Eu', 'p-lp': 'P·LP', 'p-kon': 'P·K', 'p-og': 'Przyg', 'brak-eu': 'Brak Eu', pascha: 'Pascha', kpr: 'KPR', gk: 'Głosz', kat: 'Kat', skat: 'Kat-ści' };
+  const SHORT = { skk: 'Kat', ogp: 'OP', oga: 'OA', piel: 'Pg', skrt: 'Sk', inne: 'W', eu: 'Euch', ls: 'LS', lp: 'Pok', kon: 'Konw', 'p-ls': 'P·LS', 'p-eu': 'P·Eu', 'p-lp': 'P·LP', 'p-kon': 'P·K', 'p-og': 'Przyg', 'brak-eu': 'Brak Eu', pascha: 'Pascha', kpr: 'KPR', gk: 'Głosz', kat: 'Kat', skat: 'Kat-ści' };
   const TY = {}; TYPES.forEach(t => { TY[t[0]] = { n: t[1], col: t[2], kind: t[3], s: SHORT[t[0]] }; });
   const MONTHS = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
   const DOW = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
   const DOWL = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
 
-  function alive() { return S.kal.filter(e => !e.del); }
+  /** Wydarzenie „tylko dla wybranych”: widzą je i dostają przypomnienia tylko zaproszeni (i autor). */
+  function forMe(e) { return !e.tylko || !S.owner || (e.zapr || []).indexOf(S.owner) >= 0 || e.autor === S.owner; }
+  function alive() { return S.kal.filter(e => !e.del && forMe(e)); }
   function visible(e) { return S.kalView === 'all' || e.wsp === 'all' || e.wsp === S.kalView; }
   function onDay(e, d) {
     if (isCyclic(e)) return e.data <= d && (!e.dataDo || d <= e.dataDo) && e.dni.indexOf(dow7(fromIso(d))) >= 0;
@@ -316,6 +319,7 @@
     UI.kalD = UI.kalD || iso(now);
     const m0 = fromIso(UI.kalM), y = m0.getFullYear(), mo = m0.getMonth();
     let h = '';
+    if (window.adventWeek && adventWeek()) h += '<div class="advbar">' + adventWreath(adventWeek()) + '<div><b>' + ['I', 'II', 'III', 'IV'][adventWeek() - 1] + ' tydzień Adwentu</b><div class="muted">Marana tha – Przyjdź, Panie Jezu!</div></div></div>';
     if (S.wspolnoty.length > 1) {
       h += '<div class="chips kalf">' + [['all', 'Wszystkie wspólnoty']].concat(S.wspolnoty.map(w => [w.id, w.nazwa])).map(x =>
         '<button class="chip' + (S.kalView === x[0] ? ' on' : '') + '" data-act="kal-view" data-a="' + x[0] + '">' + esc(x[1]) + '</button>').join('') + '</div>';
@@ -340,7 +344,7 @@
         h += '<div class="' + cls + ' multi" data-act="kal-day" data-a="' + k + '" style="' + shadow + '">' +
           '<span class="dn">' + d + '</span><span class="kseg n' + show.length + '">' + show.map((e, i) => {
             const c = (TY[e.typ] || TY['p-og']).col;
-            const TINY = { inne: 'W', eu: 'Eu', ls: 'LS', lp: 'LP', kon: 'Kw', 'p-ls': 'P', 'p-eu': 'P', 'p-lp': 'P', 'p-kon': 'P', 'p-og': 'P', 'brak-eu': '–Eu', pascha: '✝', kpr: 'KR', gk: 'GK', kat: 'K', skat: 'KŚ' };
+            const TINY = { skk: 'K', ogp: 'P', oga: 'A', piel: 'G', skrt: 'S', inne: 'W', eu: 'Eu', ls: 'LS', lp: 'LP', kon: 'Kw', 'p-ls': 'P', 'p-eu': 'P', 'p-lp': 'P', 'p-kon': 'P', 'p-og': 'P', 'brak-eu': '–Eu', pascha: '✝', kpr: 'KR', gk: 'GK', kat: 'K', skat: 'KŚ' };
             const txt = (i === 3 && more > 0) ? '+' + (more + 1) : show.length === 4 ? (TINY[e.typ] || '•') : (TY[e.typ] || TY['p-og']).s;
             return '<i style="background:' + hexA(c, 0.22) + ';border-color:' + hexA(c, 0.9) + ';color:' + c + '"' + (inTeam(e) ? ' class="me"' : '') + '>' + esc(txt) + '</i>';
           }).join('') + '</span></div>';
@@ -407,6 +411,7 @@
     if (document.querySelector('.kdni')) e.dni = Array.from(document.querySelectorAll('.kdni .chip.on')).map(x => +x.dataset.a);
     e.grupy = Array.from(document.querySelectorAll('.ktree .tg.on')).map(x => x.dataset.a);
     e.osoby = Array.from(new Set(Array.from(document.querySelectorAll('.ktree .tp.on')).map(x => x.dataset.a)));
+    { const tl = document.getElementById('kTylko'); if (tl) { e.tylko = tl.checked; e.zapr = Array.from(document.querySelectorAll('#kZap [data-act=kal-zp].on')).map(x => x.dataset.a); if (e.tylko && !e.autor) e.autor = S.owner || ''; if (e.tylko && S.owner && e.zapr.indexOf(S.owner) < 0 && e.autor !== S.owner) e.zapr.push(S.owner); } }
     return e;
   }
   function renderEventDialog() {
@@ -447,6 +452,11 @@
       '<input type="text" id="kAgapaInfo" class="mt" value="' + esc(e.agapaInfo) + '" placeholder="Agapa – kto co przynosi (opcjonalnie)">' +
       (S.wspolnoty.length > 1 ? '<label class="lbl">Wspólnota</label><select data-ch="kal-wsp">' + [['all', 'Wszystkie moje wspólnoty']].concat(S.wspolnoty.map(w => [w.id, w.nazwa])).map(x =>
         '<option value="' + x[0] + '"' + (e.wsp === x[0] ? ' selected' : '') + '>' + esc(x[1]) + '</option>').join('') + '</select>' : '') +
+      ((e.typ === 'skk' && e.tylko === undefined) ? (e.tylko = true, e.zapr = Object.keys(S.katech || {}), '') : '') +
+      '<label class="row mt"><input type="checkbox" id="kTylko" data-ch="kal-tylko"' + (e.tylko ? ' checked' : '') + '><span class="grow"><b>Tylko dla zaproszonych</b> <span class="muted">(np. spotkanie katechistów)</span></span></label>' +
+      '<div id="kZap" class="kzap' + (e.tylko ? '' : ' hidden') + '"><div class="muted">Widzą je i dostają przypomnienie tylko zaznaczeni.</div><div class="chips mt">' +
+        '<button class="chip sm" data-act="kal-zpq" data-a="k">K – katechiści</button><button class="chip sm" data-act="kal-zpq" data-a="all">Wszyscy</button><button class="chip sm" data-act="kal-zpq" data-a="0">Nikt</button></div>' +
+        '<div class="chips mt">' + people.filter(b => !(S.zmarli || {})[b]).map(b => '<button class="chip' + ((e.zapr || []).indexOf(b) >= 0 ? ' on' : '') + '" data-act="kal-zp" data-a="' + esc(b) + '">' + ((S.katech || {})[b] ? '<b>K</b> ' : '') + esc(b) + '</button>').join('') + '</div></div>' +
       '<label class="lbl">' + (t.kind === 'p' ? 'Kto przygotowuje' : 'Ekipa – kto przygotowuje') + '</label>' +
       '<div class="muted">' + (t.kind === 'p' ? 'Przypomnienie dzień wcześniej dostają tylko zaznaczone osoby i grupy.'
         : 'Wydarzenie i informacje widzi cała wspólnota' + (e.wsp === 'all' ? ' (wszystkie Twoje wspólnoty)' : '') + ' i wszyscy dostają przypomnienie. Tu zaznacz tylko ekipę, która przygotowuje.') + '</div>' +
@@ -725,6 +735,8 @@
   /* ===================== AKCJE ===================== */
 
   function act(a, v, el) {
+    if (a === 'kal-zp') { el.classList.toggle('on'); return true; }
+    if (a === 'kal-zpq') { document.querySelectorAll('#kZap [data-act=kal-zp]').forEach(x => x.classList.toggle('on', v === 'all' || (v === 'k' && !!(S.katech || {})[x.dataset.a]))); return true; }
     if (a.indexOf('plan-') === 0) return planAct(a, v, el);
     if (a.indexOf('harm-') === 0) return harmAct(a, v, el);
     const m = modalState;
@@ -805,7 +817,7 @@
         Object.assign(modalState.e, { celId: c.id, celData: c.data, celGodz: c.godz || '', data: iso(addDays(fromIso(c.data), -2)) }); renderEventDialog(); return true;
       }
       case 'kal-evsms': { const e = alive().find(x => x.id === v); if (!e) return true;
-        closeModal(); modalState = { kind: 'plan', only: e.id, range: 'd', day: e.data, ws: e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp], feasts: false, stage: 'pick', sent: {}, hello: 'imie', team: true, off: {} };
+        closeModal(); modalState = { kind: 'plan', only: e.id, range: 'd', day: e.data, ws: e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp], feasts: false, stage: 'pick', sent: {}, hello: 'imie', team: true, off: e.tylko ? Object.fromEntries(planPeople(e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp]).filter(p => (e.zapr || []).indexOf(p.n) < 0).map(p => [p.n, 1])) : {} };
         planDialog(); return true; }
       case 'kal-prepgo': closeModal(); go(v); return true;
       case 'kal-prep': { const e = alive().find(x => x.id === v); if (e && PREP_V[e.typ]) { closeModal(); openPrep(e); } return true; }
@@ -852,6 +864,7 @@
         modalState.wsp[+v] = el.value; renderGrob(sel, name); return true;
       }
       case 'kal-typ': grabEvent(); modalState.e.typ = el.value; renderEventDialog(); return true;
+      case 'kal-tylko': { const z = document.getElementById('kZap'); if (z) z.classList.toggle('hidden', !el.checked); return true; }
       case 'kal-wsp': grabEvent(); modalState.e.wsp = el.value; modalState.e.grupy = []; renderEventDialog(); return true;
       case 'plan-p': if (el.checked) delete modalState.off[v]; else modalState.off[v] = 1;
         { const b = document.querySelector('[data-act=plan-next]'); if (b) b.textContent = 'Dalej (' + planPeople(modalState.ws).filter(p => !modalState.off[p.n]).length + ' os.) ▶'; } return true;
@@ -933,7 +946,8 @@
     if (m.only) { const e = alive().find(x => x.id === m.only); const d = e ? fromIso(e.data) : new Date(); return { rg: [d, d], a: e ? e.data : '', b: e ? e.data : '', evs: e ? [e] : [] }; }
     const rg = planRange(m.range), a = iso(rg[0]), b = iso(rg[1]), inWs = e => e.wsp === 'all' || m.ws.indexOf(e.wsp) >= 0;
     const evs = [];
-    alive().filter(inWs).forEach(e => {
+    const kOk = e => !m.kinds || m.kinds[(TY[e.typ] || {}).kind || 'o'] !== false;
+    alive().filter(inWs).filter(kOk).forEach(e => {
       if (isCyclic(e)) { if (e.data <= b && (!e.dataDo || e.dataDo >= a)) for (let d = new Date(rg[0]); d <= rg[1]; d = addDays(d, 1)) if (onDay(e, iso(d))) evs.push(Object.assign({}, e, { data: iso(d), dataDo: '' })); return; }
       if (e.data <= b && (e.dataDo || e.data) >= a) evs.push(e);
     });
@@ -945,26 +959,27 @@
     if (m.feasts) for (let d = new Date(P.rg[0]); d <= P.rg[1]; d = addDays(d, 1)) feastsOn(iso(d)).filter(f => f.r === 'U').forEach(f => items.push({ d: iso(d), g: '', f: f.n }));
     items.sort((x, y) => (x.d + x.g).localeCompare(y.d + y.g));
     const evItems = items.filter(i => i.e), lines = [];
+    const fs = items.filter(i => i.f), fl = () => { if (fs.length) lines.push('', '✠ Uroczystości:', ...fs.map(i => (one ? '' : SH[fromIso(i.d).getDay()] + ' ' + dm(i.d) + ' – ') + i.f)); };
     const place = e => [e.gdzie, e.miasto, e.adres].filter(Boolean).join(', ');
     if (evItems.length === 1 && (one || items.length === 1)) {   // jedno spotkanie – zwykłe zdania
       const e = evItems[0].e, w = whenHuman(e, true), pl = place(e);
       lines.push('✝ ' + nm(e) + ' – ' + w + (pl ? ', ' + pl : '') + '.');
       if (CEL_OF[e.typ] && e.celData) lines.push('Przygotowujemy ' + (CEL_OF[e.typ] === 'eu' ? 'Eucharystię' : 'Liturgię Słowa') + ': ' + ACC[fromIso(e.celData).getDay()] + ' ' + dm(e.celData) + ((e.celGodz || (celOf(e) || {}).godz) ? ' o ' + (e.celGodz || celOf(e).godz) : '') + '.');
       if (PREP_OF[e.typ]) prepsOf(e).slice(0, 1).forEach(p => lines.push('Przygotowanie: ' + ACC[fromIso(p.data).getDay()] + ' ' + dm(p.data) + (p.godz ? ' o ' + p.godz : '') + (p.gdzie ? ', ' + p.gdzie : '') + '.'));
-      items.filter(i => i.f).forEach(i => lines.push('✠ ' + i.f));
+      fl();
       const ex = extraLines(e, Object.assign({}, m, { team: m.team !== false })); if (ex.length) lines.push('', ...ex);
     } else if (!evItems.length) {
       lines.push(one ? 'Tego dnia (' + ACC[P.rg[0].getDay()].replace(/^we? /, '') + ' ' + dm(P.a) + ') nie mamy spotkań.' : 'Do ' + dm(P.b) + ' nie mamy zaplanowanych spotkań.');
-      items.forEach(i => lines.push('✠ ' + i.f));
+      fl();
     } else {
-      lines.push(one ? '✝ Spotkania ' + ACC[P.rg[0].getDay()] + ' ' + dm(P.a) + ':' : '✝ ' + (m.range === 'z' ? 'Spotkania' : 'Najbliższe spotkania') + ' (' + dm(P.a) + '–' + dm(P.b) + '):');
+      lines.push(one ? '✝ Plan na ' + ACC[P.rg[0].getDay()] + ' ' + dm(P.a) + ':' : '✝ Plan na najbliższy czas (' + dm(P.a) + '–' + dm(P.b) + '):');
       let lastD = '';
-      items.forEach(i => {
+      evItems.forEach(i => {
         if (!one && i.d !== lastD) { lines.push('', SH[fromIso(i.d).getDay()] + ' ' + dm(i.d) + ':'); lastD = i.d; }
-        if (i.f) { lines.push('✠ ' + i.f); return; }
         const e = i.e, w = whenHuman(e, false), pl = place(e);
         lines.push('• ' + nm(e) + (w ? (/^o /.test(w) ? ' ' : ', ') + w : '') + (pl ? ', ' + pl : ''));   // wiele wydarzeń: tylko co, kiedy, gdzie
       });
+      fl();
     }
     lines.push('', 'Do zobaczenia! Niech Pan nas prowadzi.');
     return lines.join('\n');
@@ -972,7 +987,7 @@
   function grabPlan() { const t = document.getElementById('planBody'); if (t && modalState) modalState.body = t.value; }
   function planMsg(m, who) { const h = m.hello === true ? 'imie' : m.hello, nm = h === 'bracia' || !who ? 'bracia' : firstName(who); return (h ? pokoj() + ', ' + nm + '!\n\n' : '') + (m.body !== undefined ? m.body : planText(m)); }
   function planDialog() {
-    if (!modalState || modalState.kind !== 'plan') modalState = { kind: 'plan', off: Object.fromEntries(peopleOf(S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id]).filter(p => !massOK(p.n)).map(p => [p.n, 1])), range: '14', ws: S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id], feasts: true, stage: 'pick', sent: {}, hello: 'imie', team: false };
+    if (!modalState || modalState.kind !== 'plan') modalState = { kind: 'plan', off: Object.fromEntries(peopleOf(S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id]).filter(p => !massOK(p.n)).map(p => [p.n, 1])), range: '14', ws: S.wspolnoty.length > 1 ? S.wspolnoty.map(w => w.id) : [S.wspolnoty[0].id], feasts: false, stage: 'pick', sent: {}, hello: 'imie', team: false };
     const m = modalState;
     if (m.stage === 'queue') {
       const ppl = planPeople(m.ws).filter(p => !m.off[p.n]);
@@ -997,12 +1012,16 @@
       (S.wspolnoty.length > 1 ? '<label class="lbl">Do kogo</label><div class="chips">' + S.wspolnoty.map(w =>
         '<button class="chip' + (m.ws.indexOf(w.id) >= 0 ? ' on' : '') + '" data-act="plan-ws" data-a="' + w.id + '">' + esc(w.nazwa) + '</button>').join('') +
         '<button class="chip' + (m.ws.length === S.wspolnoty.length ? ' on' : '') + '" data-act="plan-ws" data-a="*">Wszystkie</button></div>' : '') +
-      '<label class="row mt"><input type="checkbox" data-ch="plan-feasts"' + (m.feasts ? ' checked' : '') + '><span class="grow">Dodaj uroczystości ✠</span></label>' +
+      (m.only ? '' : '<label class="lbl">Co ma być zawarte</label><div class="chips">' + [['c', 'Celebracje'], ['k', 'Katechezy'], ['p', 'Przygotowania'], ['o', 'Inne']].map(x =>
+        '<button class="chip sm' + ((m.kinds || {})[x[0]] === false ? '' : ' on') + '" data-act="plan-kind2" data-a="' + x[0] + '">' + x[1] + '</button>').join('') +
+        '<button class="chip sm' + (m.feasts ? ' on' : '') + '" data-act="plan-fe">' + 'Uroczystości ✠</button></div>') +
       '<label class="row"><input type="checkbox" data-ch="plan-team"' + (m.team ? ' checked' : '') + '><span class="grow">Dopisz, kto przygotowuje (ekipa)</span></label>' +
       '<label class="lbl">Powitanie</label><div class="chips">' + [['imie', 'Pokój, {imię}!'], ['bracia', 'Pokój, bracia!'], ['', 'bez']].map(x =>
         '<button class="chip' + ((m.hello === true ? 'imie' : m.hello || '') === x[0] ? ' on' : '') + '" data-act="plan-hi" data-a="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
       '<label class="lbl">Podgląd</label><div class="msgprev">' + esc(planText(m)) + '</div>' +
-      '<label class="lbl">Do kogo</label><div class="chips"><button class="chip" data-act="plan-all" data-a="1">Wszyscy</button><button class="chip" data-act="plan-all" data-a="2">Wszyscy+</button><button class="chip" data-act="plan-all" data-a="0">Nikt</button></div>' +
+      '<label class="lbl">Do kogo</label><div class="chips"><button class="chip" data-act="plan-all" data-a="1">Wszyscy</button><button class="chip" data-act="plan-all" data-a="2">Wszyscy+</button><button class="chip" data-act="plan-all" data-a="0">Nikt</button>' +
+        (Object.keys(S.katech || {}).length ? '<button class="chip" data-act="plan-sel" data-a="k">K – katechiści</button>' : '') +
+        (S.grupy || []).map(g => '<button class="chip" data-act="plan-sel" data-a="' + g.id + '"><i class="gdot" style="background:' + grpColor(g) + '"></i>' + esc(g.nazwa) + '</button>').join('') + '</div>' +
       planPeople(m.ws).map(p => '<label class="row chk"><input type="checkbox" data-ch="plan-p" data-a="' + esc(p.n) + '"' + (m.off[p.n] ? '' : ' checked') + '><span class="grow">' + dot(p.n) + esc(p.n) +
         (m.ws.length > 1 ? ' <span class="muted">· ' + esc(p.wsp) + '</span>' : '') + '</span><span class="muted">' + (p.tel ? esc(p.tel) : 'brak numeru') + '</span></label>').join(''),
       '<button class="btn" data-act="plan-next"' + (m.ws.length ? '' : ' disabled') + '>Dalej (' + planPeople(m.ws).filter(p => !m.off[p.n]).length + ' os.) ▶</button>');
@@ -1019,6 +1038,10 @@
         delete m.body; planDialog(); return true;
       case 'plan-hi': m.hello = v; planDialog(); return true;
       case 'plan-next': m.stage = 'queue'; planDialog(); return true;
+      case 'plan-fe': m.feasts = !m.feasts; delete m.body; planDialog(); return true;
+      case 'plan-kind2': { m.kinds = m.kinds || {}; m.kinds[v] = m.kinds[v] === false; delete m.body; planDialog(); return true; }
+      case 'plan-sel': { const g = v === 'k' ? null : (S.grupy || []).find(x => x.id === v);
+        m.off = {}; planPeople(m.ws).forEach(p => { const inn = g ? (g.osoby || []).indexOf(p.n) >= 0 : !!(S.katech || {})[p.n]; if (!inn) m.off[p.n] = 1; }); planDialog(); return true; }
       case 'plan-all': { m.off = {}; planPeople(m.ws).forEach(p => { if (v === '0' || (v === '1' && !massOK(p.n))) m.off[p.n] = 1; }); const sc = document.querySelector('.sh-b'), y = sc ? sc.scrollTop : 0; planDialog(); const s2 = document.querySelector('.sh-b'); if (s2) s2.scrollTop = y; return true; }
       case 'plan-back': grabPlan(); m.stage = 'pick'; planDialog(); return true;
       case 'plan-auto': { grabPlan(); const ppl = planPeople(m.ws).filter(p => !m.off[p.n]);
