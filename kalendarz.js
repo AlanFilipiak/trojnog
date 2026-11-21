@@ -837,6 +837,7 @@
         closeModal(); modalState = { kind: 'plan', only: e.id, range: 'd', day: e.data, ws: e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp], feasts: false, stage: 'pick', sent: {}, hello: 'imie', team: true, off: e.tylko ? Object.fromEntries(planPeople(e.wsp === 'all' ? S.wspolnoty.map(w => w.id) : [e.wsp]).filter(p => (e.zapr || []).indexOf(p.n) < 0).map(p => [p.n, 1])) : {} };
         planDialog(); return true; }
       case 'kal-prepgo': closeModal(); go(v); return true;
+      case 'kal-eumove': closeModal(); if (window.__euMove) window.__euMove(); return true;
       case 'kal-prep': { const e = alive().find(x => x.id === v); if (e && PREP_V[e.typ]) { closeModal(); openPrep(e); } return true; }
       case 'pok-add': pokDialog(); return true;
       case 'pok-tgl': { const l = pokDates(), i = l.indexOf(v); if (i >= 0) l.splice(i, 1); else l.push(v); save(true); if (modalState && modalState.kind === 'pok') pokDialog(); else render(); return true; }
@@ -1168,12 +1169,35 @@
       if (celeb) { P.data = c.data; if (v === 'eucharystia') P.godzEu = c.godz || P.godzEu || ''; else P.godz = c.godz || P.godz || ''; if (c.gdzie) P.gdzie = c.gdzie; if (c.id) P.ev = c.id; }
       save(); go(v);
     };
+    if (celeb && v === 'eucharystia' && P.data && P.data !== c.data && P.data < iso(new Date())) { freshEu(c); return; }   // stara już się odbyła – nowe przygotowanie, stare do archiwum
     if (celeb && P.data && P.data !== c.data) {
+      if (v === 'eucharystia') {
+        confirmBox('Inny termin', 'Bieżące przygotowanie jest na ' + plDate(P.data) + '. Zacząć nowe na ' + plDate(c.data) + ' (bieżące trafi do archiwum), czy przenieść bieżące na ten dzień?', 'Nowe przygotowanie', () => freshEu(c));
+        setTimeout(() => { const f = document.querySelector('#modal .sh-f'); if (f) { window.__euMove = apply; f.insertAdjacentHTML('afterbegin', '<button class="btn text" data-act="kal-eumove">Przenieś</button>'); } }, 0);
+        return;
+      }
       confirmBox('Inny termin', 'Bieżące przygotowanie jest na ' + plDate(P.data) + '. Ustawić je na ' + plDate(c.data) + ' (z kalendarza)?', 'Ustaw', apply);
       setTimeout(() => { const f = document.querySelector('#modal .sh-f'); if (f) f.insertAdjacentHTML('afterbegin', '<button class="btn text" data-act="kal-prepgo" data-a="' + v + '">Tylko otwórz</button>'); }, 0);
       return;
     }
     apply();
+  }
+  /** Nowe przygotowanie Eucharystii dla celebracji c: poprzednie (z treścią) do archiwum, ekipa z harmonogramu (do poprawienia). */
+  function freshEu(c) {
+    const old = S.eucharystia, has = old.songs.some(Boolean) || Object.keys(old.who || {}).some(k => old.who[k]);
+    if (old.data && has && !S.history.some(h => h.tryb === 'Eucharystia' && h.date === old.data)) {
+      const og = {}; EU_ROLES.forEach(r => { if (old.who[r]) og[r] = old.who[r]; }); if (old.godzina) og['Zbiórka'] = old.godzina;
+      S.history.unshift({ id: uuid(), date: old.data, haslo: 'Eucharystia', prowadzil: '', tryb: 'Eucharystia', czytania: [], przydzialy: [], piesni: [], euPiesni: old.songs.slice(), ogolne: og, ts: Date.now() });
+    }
+    const E = S.eucharystia = newEucharystia();
+    E.data = c.data; E.godzEu = c.godz || ''; if (c.gdzie) E.gdzie = c.gdzie; if (c.id) E.ev = c.id;
+    let who = '';
+    try {
+      const H = harms().find(h => h.typ === 'eu'), x = H && harmPlan(H, 40).find(y => !y.skip && y.d === c.data);
+      if (x) { E.obecni = teamOf(H, x).filter(b => S.bracia.indexOf(b) >= 0); who = gName(x.who); }
+    } catch (er) { /* bez harmonogramu */ }
+    save(); go('eucharystia');
+    toast('Nowe przygotowanie na ' + plDate(c.data) + (who ? ' – wg harmonogramu: ' + who + ' (możesz zmienić)' : '') + (old.data ? '. Poprzednie (' + plDate(old.data) + ') jest w archiwum.' : '.'));
   }
   /** Z przygotowania do kalendarza: wydarzenie z tą datą (połączone albo pasujące typem i dniem). */
   function prepEvent(v) {
